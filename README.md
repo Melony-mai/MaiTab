@@ -171,13 +171,15 @@ MaiTab/
 │   ├── icon16.png                    # Extension icon (16x16)
 │   ├── icon32.png                    # Extension icon (32x32)
 │   ├── icon48.png                    # Extension icon (48x48)
-│   └── icon128.png                   # Extension icon (128x128)
+│   ├── icon128.png                   # Extension icon (128x128)
+│   └── icon512.png                   # Extension icon (512x512)
 ├── tests/
 │   ├── i18n.test.js                  # Multilingual translation & completeness tests
 │   ├── domain-matcher.test.js        # Domain normalization, whitelist, bypass & precedence tests
 │   ├── link-interceptor.test.js      # Click interception, safety edge cases & bypass tests
 │   ├── storage.test.js               # Storage persistence, CRUD & bypass list tests
 │   └── manifest-and-integration.test.js # Manifest V3, 6-scenario verification & E2E simulation
+├── MaiTab.png                        # Master brand icon asset (512x512)
 ├── package.json                      # Project metadata (v1.1.0) and test runner script
 └── README.md                         # Technical documentation
 ```

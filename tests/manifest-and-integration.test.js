@@ -44,6 +44,30 @@ test('Manifest V3 validation', async (t) => {
       const stat = fs.statSync(fullPath);
       assert.ok(stat.size > 0, `Icon ${size} must not be empty`);
     }
+
+    // Verify action.default_icon entries
+    assert.ok(manifest.action?.default_icon, 'action.default_icon must exist');
+    for (const [size, iconPath] of Object.entries(manifest.action.default_icon)) {
+      const fullPath = path.join(rootDir, iconPath);
+      assert.strictEqual(fs.existsSync(fullPath), true, `Default icon ${size} (${iconPath}) must exist`);
+    }
+
+    // Verify root MaiTab.png master asset is preserved
+    const masterIconPath = path.join(rootDir, 'MaiTab.png');
+    assert.strictEqual(fs.existsSync(masterIconPath), true, 'Original MaiTab.png must be preserved in project root');
+
+    // Helper to read PNG dimensions from IHDR chunk
+    const getPngDimensions = (filePath) => {
+      const buf = fs.readFileSync(filePath);
+      assert.strictEqual(buf.readUInt32BE(0), 0x89504E47, `${filePath} must have PNG header`);
+      return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+    };
+
+    assert.deepStrictEqual(getPngDimensions(masterIconPath), { width: 512, height: 512 });
+    assert.deepStrictEqual(getPngDimensions(path.join(rootDir, 'icons/icon16.png')), { width: 16, height: 16 });
+    assert.deepStrictEqual(getPngDimensions(path.join(rootDir, 'icons/icon32.png')), { width: 32, height: 32 });
+    assert.deepStrictEqual(getPngDimensions(path.join(rootDir, 'icons/icon48.png')), { width: 48, height: 48 });
+    assert.deepStrictEqual(getPngDimensions(path.join(rootDir, 'icons/icon128.png')), { width: 128, height: 128 });
   });
 
   await t.test('background service worker file exists', () => {
