@@ -19,7 +19,7 @@ test('Manifest V3 validation', async (t) => {
   await t.test('conforms to Manifest V3 structure', () => {
     assert.strictEqual(manifest.manifest_version, 3, 'manifest_version must be 3');
     assert.ok(manifest.name, 'manifest must have a name');
-    assert.ok(manifest.version, 'manifest must have a version');
+    assert.strictEqual(manifest.version, '1.1', 'manifest version must be 1.1');
     assert.ok(manifest.description, 'manifest must have a description');
     assert.strictEqual(manifest.default_locale, 'en', 'manifest default_locale must be en');
   });
@@ -226,5 +226,121 @@ test('End-to-End Decision Flow Simulation', async (t) => {
       currentHostname: 'reddit.com'
     });
     assert.strictEqual(redditSwitchUpdated, true, 'Updated whitelist entry focus to true immediately switches focus even when global is OFF');
+
+    // 7. Complete Bypass List (Silent List) scenarios:
+    settings.bypassList = [{ domain: 'google.com' }, { domain: 'bypass-priority.com' }];
+
+    // Scenario 1: Website on Complete Bypass List:
+    const isGoogleBypassed = DomainMatcher.isDomainBypassed('google.com', settings.bypassList);
+    assert.strictEqual(isGoogleBypassed, true, 'google.com must match Complete Bypass List');
+
+    const googleClick = LinkEvaluator.shouldInterceptClick(
+      { button: 0, target: { closest: () => ({ href: 'https://google.com/search', getAttribute: () => 'https://google.com/search' }) } },
+      { enabled: true, currentLocation: 'https://google.com/', isBypassed: true }
+    );
+    assert.strictEqual(googleClick.intercept, false, 'Click interception must be disabled on bypassed site');
+    assert.strictEqual(googleClick.reason, 'site_bypassed');
+
+    const googleSwitch = DomainMatcher.shouldSwitchTab({
+      enabled: true,
+      autoSwitch: true,
+      whitelist: settings.whitelist,
+      bypassList: settings.bypassList,
+      currentHostname: 'google.com'
+    });
+    assert.strictEqual(googleSwitch, false, 'Tab switching must be disabled on bypassed site');
+
+    // Scenario 4: The Complete Bypass List takes precedence when a website matches BOTH lists
+    settings.whitelist.push({ domain: 'bypass-priority.com', autoFocus: true });
+    // Both in whitelist (autoFocus: true) AND in bypassList:
+    const matchedBypassRule = DomainMatcher.getMatchedBypassRule('bypass-priority.com', settings.bypassList);
+    const matchedWhiteRule = DomainMatcher.getMatchedRule('bypass-priority.com', settings.whitelist);
+    assert.ok(matchedBypassRule, 'Matches bypass list');
+    assert.ok(matchedWhiteRule, 'Matches whitelist');
+
+    const prioritySwitch = DomainMatcher.shouldSwitchTab({
+      enabled: true,
+      autoSwitch: true,
+      whitelist: settings.whitelist,
+      bypassList: settings.bypassList,
+      currentHostname: 'bypass-priority.com'
+    });
+    assert.strictEqual(
+      prioritySwitch,
+      false,
+      'Complete Bypass List MUST strictly take precedence over whitelist even if autoFocus is true'
+    );
+
+    // Subdomain of dual-listed website:
+    const subPrioritySwitch = DomainMatcher.shouldSwitchTab({
+      enabled: true,
+      autoSwitch: true,
+      whitelist: settings.whitelist,
+      bypassList: settings.bypassList,
+      currentHostname: 'sub.bypass-priority.com'
+    });
+    assert.strictEqual(subPrioritySwitch, false, 'Subdomain of dual-listed website must also be bypassed');
+
+    // Scenario 2: Websites on the regular whitelist continue to follow configured focus behavior
+    const hnStillWorks = DomainMatcher.shouldSwitchTab({
+      enabled: true,
+      autoSwitch: false,
+      whitelist: settings.whitelist,
+      bypassList: settings.bypassList,
+      currentHostname: 'news.ycombinator.com'
+    });
+    assert.strictEqual(hnStillWorks, true, 'Regular whitelist entry continues to switch focus');
+
+    // Scenario 3: Websites not included in either list continue to follow global settings
+    const unlistedGlobalOff = DomainMatcher.shouldSwitchTab({
+      enabled: true,
+      autoSwitch: false,
+      whitelist: settings.whitelist,
+      bypassList: settings.bypassList,
+      currentHostname: 'some-other-blog.org'
+    });
+    assert.strictEqual(unlistedGlobalOff, false, 'Unlisted site opens in background when global toggle is OFF');
+
+    const unlistedGlobalOn = DomainMatcher.shouldSwitchTab({
+      enabled: true,
+      autoSwitch: true,
+      whitelist: settings.whitelist,
+      bypassList: settings.bypassList,
+      currentHostname: 'some-other-blog.org'
+    });
+    assert.strictEqual(unlistedGlobalOn, true, 'Unlisted site opens in foreground when global toggle is ON');
+  });
+
+  await t.test('Scenario 5: List entries and settings persist after restarting Chrome (storage simulation)', async () => {
+    const StorageManager = require('../common/storage.js');
+
+    // Simulate persistent browser storage that survives across sessions
+    const persistentStore = {};
+    const mockStorageAdapter = {
+      get: (defaults, cb) => {
+        const res = { ...defaults };
+        for (const k of Object.keys(defaults)) {
+          if (k in persistentStore) res[k] = persistentStore[k];
+        }
+        cb(res);
+      },
+      set: (items, cb) => {
+        Object.assign(persistentStore, items);
+        cb();
+      }
+    };
+
+    // Session 1: User sets configurations
+    await StorageManager.saveSettings({ enabled: true, autoSwitch: true, language: 'zh-CN' }, mockStorageAdapter);
+    await StorageManager.addWhitelistDomain('github.com', false, mockStorageAdapter);
+    await StorageManager.addBypassDomain('google.com', mockStorageAdapter);
+
+    // Simulate browser shutdown and restart: read fresh settings from storage
+    const restoredSettings = await StorageManager.getSettings(mockStorageAdapter);
+    assert.strictEqual(restoredSettings.enabled, true);
+    assert.strictEqual(restoredSettings.autoSwitch, true);
+    assert.strictEqual(restoredSettings.language, 'zh-CN');
+    assert.deepStrictEqual(restoredSettings.whitelist, [{ domain: 'github.com', autoFocus: false }]);
+    assert.deepStrictEqual(restoredSettings.bypassList, [{ domain: 'google.com' }]);
   });
 });

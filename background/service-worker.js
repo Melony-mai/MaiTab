@@ -73,12 +73,15 @@ async function handleMessage(request, sender) {
     case 'checkSiteStatus': {
       const settings = await StorageManager.getSettings();
       const currentHost = request.currentHost || (sender.tab?.url ? new URL(sender.tab.url).hostname : '');
+      const isBypassed = DomainMatcher.isDomainBypassed(currentHost, settings.bypassList);
+      const matchedBypassRule = DomainMatcher.getMatchedBypassRule(currentHost, settings.bypassList);
       const isWhitelisted = DomainMatcher.isDomainWhitelisted(currentHost, settings.whitelist);
       const matchedRule = DomainMatcher.getMatchedRule(currentHost, settings.whitelist);
       const willSwitch = DomainMatcher.shouldSwitchTab({
         enabled: settings.enabled,
         autoSwitch: settings.autoSwitch,
         whitelist: settings.whitelist,
+        bypassList: settings.bypassList,
         currentHostname: currentHost
       });
 
@@ -87,6 +90,8 @@ async function handleMessage(request, sender) {
         enabled: settings.enabled,
         autoSwitch: settings.autoSwitch,
         currentHost,
+        isBypassed,
+        matchedBypassRule,
         isWhitelisted,
         matchedRule,
         willSwitch
@@ -125,11 +130,17 @@ async function handleOpenTab(request, sender) {
     }
   }
 
+  // Complete Bypass List takes absolute priority: do not intercept or create tab
+  if (DomainMatcher.isDomainBypassed(currentHost, settings.bypassList)) {
+    return { success: false, bypassed: true };
+  }
+
   // Determine if new tab should be active (foreground) or background
   const shouldSwitch = DomainMatcher.shouldSwitchTab({
     enabled: settings.enabled,
     autoSwitch: settings.autoSwitch,
     whitelist: settings.whitelist,
+    bypassList: settings.bypassList,
     currentHostname: currentHost
   });
 

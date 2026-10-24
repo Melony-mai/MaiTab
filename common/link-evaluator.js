@@ -93,6 +93,8 @@
    * @param {Location|string} [options.currentLocation] - Current page location
    * @param {boolean} [options.isDrag=false] - True if user dragged mouse before click
    * @param {boolean} [options.hasTextSelection=false] - True if text is selected
+   * @param {boolean} [options.isBypassed=false] - True if current website is in Complete Bypass List
+   * @param {Array<string|{domain: string}>} [options.bypassList=[]] - Complete Bypass List domain entries
    * @returns {{ intercept: boolean, url?: string, reason?: string }}
    */
   function shouldInterceptClick(event, options = {}) {
@@ -100,11 +102,40 @@
       enabled = true,
       currentLocation = typeof window !== 'undefined' ? window.location : 'https://example.com',
       isDrag = false,
-      hasTextSelection = false
+      hasTextSelection = false,
+      isBypassed = false,
+      bypassList = []
     } = options;
 
     if (!enabled) {
       return { intercept: false, reason: 'extension_disabled' };
+    }
+
+    if (isBypassed) {
+      return { intercept: false, reason: 'site_bypassed' };
+    }
+
+    if (Array.isArray(bypassList) && bypassList.length > 0) {
+      try {
+        let hostname = '';
+        if (typeof currentLocation === 'string') {
+          hostname = new URL(currentLocation).hostname;
+        } else if (currentLocation && currentLocation.hostname) {
+          hostname = currentLocation.hostname;
+        }
+
+        if (hostname) {
+          const matcher = (typeof DomainMatcher !== 'undefined' && DomainMatcher.isDomainBypassed)
+            ? DomainMatcher
+            : (typeof root !== 'undefined' && root.DomainMatcher ? root.DomainMatcher : null);
+
+          if (matcher && matcher.isDomainBypassed(hostname, bypassList)) {
+            return { intercept: false, reason: 'site_bypassed' };
+          }
+        }
+      } catch {
+        // Fallback
+      }
     }
 
     if (!event) {

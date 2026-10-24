@@ -83,6 +83,30 @@ test('DomainMatcher.isDomainWhitelisted', async (t) => {
   assert.strictEqual(DomainMatcher.isDomainWhitelisted('ycombinator.com', whitelist), false);
 });
 
+test('DomainMatcher.isDomainBypassed', async (t) => {
+  const bypassList = [{ domain: 'google.com' }, { domain: 'internal.corp' }, 'bank.example.org'];
+
+  assert.strictEqual(DomainMatcher.isDomainBypassed('google.com', bypassList), true);
+  assert.strictEqual(DomainMatcher.isDomainBypassed('mail.google.com', bypassList), true);
+  assert.strictEqual(DomainMatcher.isDomainBypassed('deep.sub.internal.corp', bypassList), true);
+  assert.strictEqual(DomainMatcher.isDomainBypassed('bank.example.org', bypassList), true);
+
+  assert.strictEqual(DomainMatcher.isDomainBypassed('fakegoogle.com', bypassList), false);
+  assert.strictEqual(DomainMatcher.isDomainBypassed('google.com.attacker.com', bypassList), false);
+  assert.strictEqual(DomainMatcher.isDomainBypassed('github.com', bypassList), false);
+  assert.strictEqual(DomainMatcher.isDomainBypassed('', bypassList), false);
+});
+
+test('DomainMatcher.getMatchedBypassRule', async (t) => {
+  const bypassList = [{ domain: 'google.com' }, 'docs.python.org'];
+
+  assert.deepStrictEqual(DomainMatcher.getMatchedBypassRule('google.com', bypassList), { domain: 'google.com' });
+  assert.deepStrictEqual(DomainMatcher.getMatchedBypassRule('drive.google.com', bypassList), { domain: 'google.com' });
+  assert.deepStrictEqual(DomainMatcher.getMatchedBypassRule('docs.python.org', bypassList), { domain: 'docs.python.org' });
+  assert.strictEqual(DomainMatcher.getMatchedBypassRule('python.org', bypassList), null);
+  assert.strictEqual(DomainMatcher.getMatchedBypassRule('wikipedia.org', bypassList), null);
+});
+
 test('DomainMatcher.getMatchedRule', async (t) => {
   const whitelist = [
     { domain: 'github.com', autoFocus: true },
@@ -238,6 +262,63 @@ test('DomainMatcher.shouldSwitchTab decision logic and precedence', async (t) =>
       }),
       false,
       'Disabled extension returns false regardless of other settings'
+    );
+  });
+
+  await t.test('Matrix 6: Complete Bypass List takes absolute priority over Whitelist and Global Switch', () => {
+    const bypassList = [{ domain: 'bypass-site.com' }, 'special.corp'];
+
+    // Even if website is in whitelist with autoFocus: true AND global autoSwitch is ON:
+    // It must return false because it's in bypassList!
+    assert.strictEqual(
+      DomainMatcher.shouldSwitchTab({
+        enabled: true,
+        autoSwitch: true,
+        whitelist: [{ domain: 'bypass-site.com', autoFocus: true }],
+        bypassList,
+        currentHostname: 'bypass-site.com'
+      }),
+      false,
+      'Bypassed website returns false even when whitelisted with autoFocus: true and global ON'
+    );
+
+    // Subdomain of bypassed site:
+    assert.strictEqual(
+      DomainMatcher.shouldSwitchTab({
+        enabled: true,
+        autoSwitch: true,
+        whitelist: [{ domain: 'bypass-site.com', autoFocus: true }],
+        bypassList,
+        currentHostname: 'sub.bypass-site.com'
+      }),
+      false,
+      'Subdomain of bypassed site returns false even when whitelisted'
+    );
+
+    // Bypassed string entry:
+    assert.strictEqual(
+      DomainMatcher.shouldSwitchTab({
+        enabled: true,
+        autoSwitch: true,
+        whitelist: [{ domain: 'portal.special.corp', autoFocus: true }],
+        bypassList,
+        currentHostname: 'portal.special.corp'
+      }),
+      false,
+      'Bypassed string entry returns false'
+    );
+
+    // Non-bypassed whitelisted site still behaves normally:
+    assert.strictEqual(
+      DomainMatcher.shouldSwitchTab({
+        enabled: true,
+        autoSwitch: false,
+        whitelist: [{ domain: 'other-site.com', autoFocus: true }],
+        bypassList,
+        currentHostname: 'other-site.com'
+      }),
+      true,
+      'Non-bypassed whitelisted site still switches focus'
     );
   });
 });

@@ -1,15 +1,20 @@
 /**
  * MaiTab - Options Page Script
  * Provides complete multilingual settings configuration, whitelist management,
- * bulk import/export, and an interactive domain match tester.
+ * Complete Bypass List (Silent List) management, bulk import/export,
+ * and an interactive domain match tester.
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // DOM Elements
+  // DOM Elements - General & Preferences
   const optLangSelect = document.getElementById('optLangSelect');
   const optMasterEnabled = document.getElementById('optMasterEnabled');
   const optAutoSwitch = document.getElementById('optAutoSwitch');
   const optOpenNext = document.getElementById('optOpenNext');
+  const resetDefaultsBtn = document.getElementById('resetDefaultsBtn');
+  const toast = document.getElementById('toast');
+
+  // DOM Elements - Whitelist
   const optWhitelistCount = document.getElementById('optWhitelistCount');
   const optAddDomainForm = document.getElementById('optAddDomainForm');
   const optDomainInput = document.getElementById('optDomainInput');
@@ -21,14 +26,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   const exportWhitelistBtn = document.getElementById('exportWhitelistBtn');
   const importWhitelistBtn = document.getElementById('importWhitelistBtn');
   const clearWhitelistBtn = document.getElementById('clearWhitelistBtn');
-  const resetDefaultsBtn = document.getElementById('resetDefaultsBtn');
   const importFileInput = document.getElementById('importFileInput');
-  const toast = document.getElementById('toast');
 
-  // Tester Elements
+  // DOM Elements - Complete Bypass List
+  const optBypassCount = document.getElementById('optBypassCount');
+  const optAddBypassForm = document.getElementById('optAddBypassForm');
+  const optBypassDomainInput = document.getElementById('optBypassDomainInput');
+  const optBypassInputError = document.getElementById('optBypassInputError');
+  const optBypassSearchInput = document.getElementById('optBypassSearchInput');
+  const optBypassTableBody = document.getElementById('optBypassTableBody');
+  const optEmptyBypassState = document.getElementById('optEmptyBypassState');
+  const exportBypassBtn = document.getElementById('exportBypassBtn');
+  const importBypassBtn = document.getElementById('importBypassBtn');
+  const clearBypassBtn = document.getElementById('clearBypassBtn');
+  const importBypassFileInput = document.getElementById('importBypassFileInput');
+
+  // DOM Elements - Tester
   const testerInput = document.getElementById('testerInput');
   const testerResult = document.getElementById('testerResult');
   const testerNormalizedHost = document.getElementById('testerNormalizedHost');
+  const testerBypassBadge = document.getElementById('testerBypassBadge');
   const testerMatchedBadge = document.getElementById('testerMatchedBadge');
   const testerBehaviorBadge = document.getElementById('testerBehaviorBadge');
   const testerExplanation = document.getElementById('testerExplanation');
@@ -45,14 +62,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, 2800);
   }
 
-  function showError(msg) {
+  function showWhitelistError(msg) {
     optInputError.textContent = msg;
     optInputError.classList.remove('hidden');
   }
 
-  function hideError() {
+  function hideWhitelistError() {
     optInputError.textContent = '';
     optInputError.classList.add('hidden');
+  }
+
+  function showBypassError(msg) {
+    optBypassInputError.textContent = msg;
+    optBypassInputError.classList.remove('hidden');
+  }
+
+  function hideBypassError() {
+    optBypassInputError.textContent = '';
+    optBypassInputError.classList.add('hidden');
   }
 
   /**
@@ -83,6 +110,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     optOpenNext.checked = currentSettings.openNextToCurrent;
 
     renderWhitelist();
+    renderBypassList();
     runTester();
   }
 
@@ -201,7 +229,83 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   /**
+   * Renders the Complete Bypass List table with optional filter query.
+   */
+  function renderBypassList() {
+    const filter = optBypassSearchInput.value.trim().toLowerCase();
+    const list = currentSettings.bypassList || [];
+
+    optBypassCount.textContent = I18n.t('domainBypassCountBadge', list.length, list.length === 1 ? '' : 's');
+
+    const filtered = filter
+      ? list.filter((item) => {
+          const d = typeof item === 'string' ? item : item.domain;
+          return d.toLowerCase().includes(filter);
+        })
+      : list;
+
+    optBypassTableBody.innerHTML = '';
+
+    if (filtered.length === 0) {
+      optEmptyBypassState.classList.remove('hidden');
+      return;
+    }
+
+    optEmptyBypassState.classList.add('hidden');
+
+    filtered.forEach((entry) => {
+      const domain = typeof entry === 'string' ? entry : entry.domain;
+
+      const tr = document.createElement('tr');
+
+      // Domain Pattern Cell
+      const tdDomain = document.createElement('td');
+      const code = document.createElement('code');
+      code.className = 'domain-code';
+      code.textContent = domain;
+      tdDomain.appendChild(code);
+
+      // Scope Cell
+      const tdScope = document.createElement('td');
+      tdScope.className = 'scope-desc';
+      tdScope.textContent = I18n.t('scopeDescription', domain);
+
+      // Status Cell
+      const tdStatus = document.createElement('td');
+      const statusBadge = document.createElement('span');
+      statusBadge.className = 'badge badge-bypassed';
+      statusBadge.textContent = I18n.t('statusBypassed');
+      tdStatus.appendChild(statusBadge);
+
+      // Action Cell
+      const tdAction = document.createElement('td');
+      tdAction.style.textAlign = 'right';
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn-icon-danger';
+      delBtn.title = I18n.t('removeBypassAria', domain);
+      delBtn.setAttribute('aria-label', I18n.t('removeBypassAria', domain));
+      delBtn.innerHTML = '&#10005;';
+      delBtn.addEventListener('click', async () => {
+        await StorageManager.removeBypassDomain(domain);
+        showToast(I18n.t('toastBypassRemoved', domain));
+        await loadSettings();
+      });
+
+      tdAction.appendChild(delBtn);
+
+      tr.appendChild(tdDomain);
+      tr.appendChild(tdScope);
+      tr.appendChild(tdStatus);
+      tr.appendChild(tdAction);
+
+      optBypassTableBody.appendChild(tr);
+    });
+  }
+
+  /**
    * Updates the interactive domain matching simulation.
+   * Tests Complete Bypass List (highest priority) -> Whitelist -> Global toggle.
    */
   function runTester() {
     const raw = testerInput.value.trim();
@@ -216,6 +320,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     testerNormalizedHost.textContent = normalized || '(none / invalid)';
 
     if (!normalized) {
+      testerBypassBadge.className = 'badge badge-gray';
+      testerBypassBadge.textContent = I18n.t('testerInvalidInput');
       testerMatchedBadge.className = 'badge badge-gray';
       testerMatchedBadge.textContent = I18n.t('testerInvalidInput');
       testerBehaviorBadge.className = 'badge badge-gray';
@@ -224,6 +330,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    // 1. Check Complete Bypass List (Highest Priority)
+    const matchedBypass = DomainMatcher.getMatchedBypassRule(normalized, currentSettings.bypassList);
+    const isBypassed = Boolean(matchedBypass);
+
+    if (isBypassed) {
+      testerBypassBadge.className = 'badge badge-bypassed';
+      testerBypassBadge.textContent = I18n.t('testerBypassBadge', matchedBypass.domain);
+    } else {
+      testerBypassBadge.className = 'badge badge-gray';
+      testerBypassBadge.textContent = I18n.t('testerNotMatchedBadge');
+    }
+
+    // 2. Check Whitelist
     const matchedRule = DomainMatcher.getMatchedRule(normalized, currentSettings.whitelist);
     const isWhitelisted = Boolean(matchedRule);
 
@@ -235,18 +354,31 @@ document.addEventListener('DOMContentLoaded', async () => {
       testerMatchedBadge.textContent = I18n.t('testerNotMatchedBadge');
     }
 
-    const willSwitch = DomainMatcher.shouldSwitchTab({
-      enabled: currentSettings.enabled,
-      autoSwitch: currentSettings.autoSwitch,
-      whitelist: currentSettings.whitelist,
-      currentHostname: normalized
-    });
-
+    // Determine resulting behavior with strict precedence
     if (!currentSettings.enabled) {
       testerBehaviorBadge.className = 'badge badge-gray';
       testerBehaviorBadge.textContent = I18n.t('testerPausedBadge');
       testerExplanation.textContent = I18n.t('testerExplainPaused');
-    } else if (willSwitch) {
+      return;
+    }
+
+    if (isBypassed) {
+      // Complete Bypass strictly overrides whitelist and global settings!
+      testerBehaviorBadge.className = 'badge badge-bypassed';
+      testerBehaviorBadge.textContent = I18n.t('testerNativeBadge');
+      testerExplanation.textContent = I18n.t('testerExplainBypassed', normalized, matchedBypass.domain);
+      return;
+    }
+
+    const willSwitch = DomainMatcher.shouldSwitchTab({
+      enabled: currentSettings.enabled,
+      autoSwitch: currentSettings.autoSwitch,
+      whitelist: currentSettings.whitelist,
+      bypassList: currentSettings.bypassList,
+      currentHostname: normalized
+    });
+
+    if (willSwitch) {
       testerBehaviorBadge.className = 'badge badge-info';
       testerBehaviorBadge.textContent = I18n.t('testerForegroundBadge');
       if (isWhitelisted) {
@@ -294,20 +426,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     showToast(optOpenNext.checked ? I18n.t('toastOpenNextOn') : I18n.t('toastOpenNextOff'));
   });
 
-  // Whitelist Add
+  // Whitelist Add Form
   optAddDomainForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    hideError();
+    hideWhitelistError();
 
     const domain = optDomainInput.value.trim();
     if (!domain) {
-      showError(I18n.t('errEnterDomain'));
+      showWhitelistError(I18n.t('errEnterDomain'));
       return;
     }
 
     const normalized = DomainMatcher.normalizeDomain(domain);
     if (!normalized || !DomainMatcher.isValidDomain(normalized)) {
-      showError(I18n.t('errInvalidDomain'));
+      showWhitelistError(I18n.t('errInvalidDomain'));
       return;
     }
 
@@ -317,14 +449,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     if (exists) {
-      showError(I18n.t('errDomainExists', normalized));
+      showWhitelistError(I18n.t('errDomainExists', normalized));
       return;
     }
 
     const autoFocus = optNewDomainFocus ? optNewDomainFocus.value === 'true' : true;
     const result = await StorageManager.addWhitelistDomain(domain, autoFocus);
     if (!result.success) {
-      showError(result.error || I18n.t('errInvalidDomain'));
+      showWhitelistError(result.error || I18n.t('errInvalidDomain'));
       return;
     }
 
@@ -333,9 +465,52 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadSettings();
   });
 
+  // Bypass List Add Form
+  optAddBypassForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideBypassError();
+
+    const domain = optBypassDomainInput.value.trim();
+    if (!domain) {
+      showBypassError(I18n.t('errEnterDomain'));
+      return;
+    }
+
+    const normalized = DomainMatcher.normalizeDomain(domain);
+    if (!normalized || !DomainMatcher.isValidDomain(normalized)) {
+      showBypassError(I18n.t('errInvalidDomain'));
+      return;
+    }
+
+    const exists = (currentSettings.bypassList || []).some(entry => {
+      const d = typeof entry === 'string' ? entry : entry.domain;
+      return d === normalized;
+    });
+
+    if (exists) {
+      showBypassError(I18n.t('errBypassDomainExists', normalized));
+      return;
+    }
+
+    const result = await StorageManager.addBypassDomain(domain);
+    if (!result.success) {
+      showBypassError(result.error || I18n.t('errInvalidDomain'));
+      return;
+    }
+
+    optBypassDomainInput.value = '';
+    showToast(I18n.t('toastBypassAdded', result.domain));
+    await loadSettings();
+  });
+
   // Whitelist Search
   optSearchInput.addEventListener('input', () => {
     renderWhitelist();
+  });
+
+  // Bypass Search
+  optBypassSearchInput.addEventListener('input', () => {
+    renderBypassList();
   });
 
   // Interactive Tester Input
@@ -348,7 +523,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const list = currentSettings.whitelist || [];
     const exportData = {
       app: 'MaiTab',
-      version: '1.0',
+      version: '1.1',
       exportedAt: new Date().toISOString(),
       whitelist: list
     };
@@ -360,6 +535,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     a.click();
     URL.revokeObjectURL(url);
     showToast(I18n.t('toastExported'));
+  });
+
+  // Export Bypass List
+  exportBypassBtn.addEventListener('click', () => {
+    const list = currentSettings.bypassList || [];
+    const exportData = {
+      app: 'MaiTab',
+      version: '1.1',
+      exportedAt: new Date().toISOString(),
+      bypassList: list
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `maitab-bypass-list-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast(I18n.t('toastBypassExported'));
   });
 
   // Import Whitelist
@@ -377,7 +571,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const text = evt.target.result;
         let domainsToAdd = [];
 
-        // Check if JSON
         if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
           const parsed = JSON.parse(text);
           if (Array.isArray(parsed)) {
@@ -386,7 +579,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             domainsToAdd = parsed.whitelist;
           }
         } else {
-          // Plain text lines
           domainsToAdd = text.split('\n').map(l => l.trim()).filter(Boolean);
         }
 
@@ -409,11 +601,64 @@ document.addEventListener('DOMContentLoaded', async () => {
     reader.readAsText(file);
   });
 
+  // Import Bypass List
+  importBypassBtn.addEventListener('click', () => {
+    importBypassFileInput.click();
+  });
+
+  importBypassFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const text = evt.target.result;
+        let domainsToAdd = [];
+
+        if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+          const parsed = JSON.parse(text);
+          if (Array.isArray(parsed)) {
+            domainsToAdd = parsed;
+          } else if (parsed && Array.isArray(parsed.bypassList)) {
+            domainsToAdd = parsed.bypassList;
+          }
+        } else {
+          domainsToAdd = text.split('\n').map(l => l.trim()).filter(Boolean);
+        }
+
+        let addedCount = 0;
+        for (const item of domainsToAdd) {
+          const domainStr = typeof item === 'object' && item !== null ? item.domain : String(item);
+          const res = await StorageManager.addBypassDomain(domainStr);
+          if (res.success) addedCount++;
+        }
+
+        showToast(I18n.t('toastBypassImported', addedCount, addedCount === 1 ? '' : 's'));
+        await loadSettings();
+      } catch (err) {
+        alert(I18n.t('errFileParse', err.message));
+      } finally {
+        importBypassFileInput.value = '';
+      }
+    };
+    reader.readAsText(file);
+  });
+
   // Clear Whitelist
   clearWhitelistBtn.addEventListener('click', async () => {
     if (confirm(I18n.t('confirmClear'))) {
       await StorageManager.clearWhitelist();
       showToast(I18n.t('toastCleared'));
+      await loadSettings();
+    }
+  });
+
+  // Clear Bypass List
+  clearBypassBtn.addEventListener('click', async () => {
+    if (confirm(I18n.t('confirmClearBypass'))) {
+      await StorageManager.clearBypassList();
+      showToast(I18n.t('toastBypassCleared'));
       await loadSettings();
     }
   });

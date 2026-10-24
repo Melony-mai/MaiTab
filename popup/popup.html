@@ -14,7 +14,7 @@
         <img src="../icons/icon32.png" alt="MaiTab" class="brand-icon">
         <div class="brand-text">
           <h1 class="brand-title">MaiTab</h1>
-          <span class="brand-version" data-i18n="brandVersion">v1.0</span>
+          <span class="brand-version" data-i18n="brandVersion">v1.1</span>
         </div>
       </div>
       <div class="header-right">
@@ -54,9 +54,14 @@
           </svg>
           <span id="currentDomainText" class="current-domain">Detecting...</span>
         </div>
-        <button id="quickWhitelistBtn" class="btn btn-sm btn-secondary" disabled>
-          + Whitelist
-        </button>
+        <div class="current-site-actions">
+          <button id="quickWhitelistBtn" class="btn btn-sm btn-secondary" disabled data-i18n="btnWhitelist">
+            + Whitelist
+          </button>
+          <button id="quickBypassBtn" class="btn btn-sm btn-secondary" disabled data-i18n="btnBypass">
+            + Bypass
+          </button>
+        </div>
       </div>
       <div id="currentSiteFocusRow" class="current-site-focus-row hidden">
         <span class="focus-option-label" data-i18n="currentSiteFocusLabel">Tab Focus:</span>
@@ -90,50 +95,97 @@
       </div>
     </section>
 
-    <!-- Website Whitelist Section -->
-    <section class="whitelist-section">
-      <div class="section-header">
-        <div class="section-title-wrap">
-          <h2 class="section-title" data-i18n="whitelistTitle">Automatic Switching Whitelist</h2>
-          <span id="whitelistCount" class="count-pill">0</span>
+    <!-- Lists Management Section with Tabs -->
+    <section class="lists-section">
+      <div class="lists-nav-bar">
+        <div class="tab-buttons">
+          <button type="button" id="tabBtnWhitelist" class="tab-nav-btn active">
+            <span data-i18n="tabWhitelist">Whitelist</span>
+            <span id="whitelistCount" class="count-pill">0</span>
+          </button>
+          <button type="button" id="tabBtnBypass" class="tab-nav-btn">
+            <span data-i18n="tabBypass">Complete Bypass</span>
+            <span id="bypassCount" class="count-pill">0</span>
+          </button>
         </div>
         <a href="../options/options.html" target="_blank" class="link-btn" data-i18n="optionsLink" data-i18n-title="advancedSettings">Options ↗</a>
       </div>
-      <p class="section-desc" data-i18n="whitelistDesc">
-        Websites with independent focus preferences that override the global focus toggle. Subdomains are automatically included.
-      </p>
 
-      <!-- Add Domain Input -->
-      <form id="addDomainForm" class="add-form">
-        <div class="input-group">
-          <input
-            type="text"
-            id="domainInput"
-            class="input-text"
-            data-i18n-placeholder="inputPlaceholderDomain"
-            placeholder="e.g. github.com or news.ycombinator.com"
-            autocomplete="off"
-            spellcheck="false"
-          >
-          <select id="popupNewDomainFocus" class="select-focus-sm" aria-label="Tab Focus Option">
-            <option value="true" data-i18n="whitelistFocusOn">Focus</option>
-            <option value="false" data-i18n="whitelistFocusOff">Background</option>
-          </select>
-          <button type="submit" id="addDomainBtn" class="btn btn-primary" data-i18n="btnAdd" data-i18n-title="btnAdd">
-            Add
-          </button>
+      <!-- Tab 1: Whitelist Panel -->
+      <div id="panelWhitelist" class="list-panel">
+        <p class="section-desc" data-i18n="whitelistDesc">
+          Websites with independent focus preferences that override the global focus toggle. Subdomains are automatically included.
+        </p>
+
+        <!-- Add Domain Input -->
+        <form id="addDomainForm" class="add-form">
+          <div class="input-group">
+            <input
+              type="text"
+              id="domainInput"
+              class="input-text"
+              data-i18n-placeholder="inputPlaceholderDomain"
+              placeholder="e.g. github.com or news.ycombinator.com"
+              autocomplete="off"
+              spellcheck="false"
+            >
+            <select id="popupNewDomainFocus" class="select-focus-sm" aria-label="Tab Focus Option">
+              <option value="true" data-i18n="whitelistFocusOn">Focus</option>
+              <option value="false" data-i18n="whitelistFocusOff">Background</option>
+            </select>
+            <button type="submit" id="addDomainBtn" class="btn btn-primary" data-i18n="btnAdd" data-i18n-title="btnAdd">
+              Add
+            </button>
+          </div>
+          <div id="inputError" class="input-error hidden"></div>
+        </form>
+
+        <!-- Whitelist List -->
+        <div class="whitelist-container">
+          <ul id="whitelistUl" class="whitelist-items">
+            <!-- Populated dynamically -->
+          </ul>
+          <div id="emptyWhitelist" class="empty-state">
+            <p data-i18n="emptyWhitelistTitle">No whitelisted domains yet.</p>
+            <span data-i18n="emptyWhitelistDesc">Add domains above to customize their automatic tab focus behavior.</span>
+          </div>
         </div>
-        <div id="inputError" class="input-error hidden"></div>
-      </form>
+      </div>
 
-      <!-- Whitelist List -->
-      <div class="whitelist-container">
-        <ul id="whitelistUl" class="whitelist-items">
-          <!-- Populated dynamically -->
-        </ul>
-        <div id="emptyWhitelist" class="empty-state">
-          <p data-i18n="emptyWhitelistTitle">No whitelisted domains yet.</p>
-          <span data-i18n="emptyWhitelistDesc">Add domains above to force automatic tab switching for them.</span>
+      <!-- Tab 2: Complete Bypass Panel -->
+      <div id="panelBypass" class="list-panel hidden">
+        <p class="section-desc" data-i18n="bypassDesc">
+          Websites where MaiTab is completely inactive. Link clicking and tab handling follow native browser behavior. Overrides all other settings.
+        </p>
+
+        <!-- Add Bypass Input -->
+        <form id="addBypassForm" class="add-form">
+          <div class="input-group">
+            <input
+              type="text"
+              id="bypassInput"
+              class="input-text"
+              data-i18n-placeholder="inputPlaceholderBypass"
+              placeholder="e.g. google.com or internal.corp"
+              autocomplete="off"
+              spellcheck="false"
+            >
+            <button type="submit" id="addBypassBtn" class="btn btn-primary" data-i18n="btnAddBypass" data-i18n-title="btnAddBypass">
+              Add
+            </button>
+          </div>
+          <div id="bypassInputError" class="input-error hidden"></div>
+        </form>
+
+        <!-- Bypass List -->
+        <div class="whitelist-container">
+          <ul id="bypassUl" class="whitelist-items">
+            <!-- Populated dynamically -->
+          </ul>
+          <div id="emptyBypass" class="empty-state">
+            <p data-i18n="emptyBypassTitle">No bypassed websites yet.</p>
+            <span data-i18n="emptyBypassDesc">Add domains above to completely disable MaiTab on them.</span>
+          </div>
         </div>
       </div>
     </section>

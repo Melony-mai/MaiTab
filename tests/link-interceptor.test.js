@@ -166,4 +166,27 @@ test('LinkEvaluator.shouldInterceptClick', async (t) => {
     assert.strictEqual(res.intercept, false);
     assert.strictEqual(res.reason, 'interactive_form_control');
   });
+
+  await t.test('ignores click when site is explicitly bypassed (Complete Bypass List)', () => {
+    const event = createMockEvent({ anchor: mockAnchor });
+    const res = LinkEvaluator.shouldInterceptClick(event, {
+      enabled: true,
+      currentLocation: currentUrl,
+      isBypassed: true
+    });
+    assert.strictEqual(res.intercept, false, 'Must not intercept on bypassed sites');
+    assert.strictEqual(res.reason, 'site_bypassed');
+  });
+
+  await t.test('ignores click when site matches bypassList array', () => {
+    global.DomainMatcher = require('../common/domain-matcher.js');
+    const event = createMockEvent({ anchor: mockAnchor });
+    const res = LinkEvaluator.shouldInterceptClick(event, {
+      enabled: true,
+      currentLocation: 'https://news.ycombinator.com/item?id=123',
+      bypassList: [{ domain: 'news.ycombinator.com' }]
+    });
+    assert.strictEqual(res.intercept, false, 'Must not intercept on domain matching bypassList');
+    assert.strictEqual(res.reason, 'site_bypassed');
+  });
 });

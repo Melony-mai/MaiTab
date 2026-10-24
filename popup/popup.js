@@ -1,25 +1,39 @@
 /**
  * MaiTab - Popup Script
  * Manages extension toggles, multilingual support, whitelist administration,
- * and current page state.
+ * Complete Bypass List (Silent List) management, and current page state.
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // DOM Elements
+  // DOM Elements - General & Header
   const langSelect = document.getElementById('langSelect');
   const masterToggle = document.getElementById('masterEnabledToggle');
   const disabledBanner = document.getElementById('disabledBanner');
+
+  // DOM Elements - Current Tab Status Card
   const siteStatusBadge = document.getElementById('siteStatusBadge');
   const currentDomainText = document.getElementById('currentDomainText');
   const quickWhitelistBtn = document.getElementById('quickWhitelistBtn');
+  const quickBypassBtn = document.getElementById('quickBypassBtn');
   const currentSiteFocusRow = document.getElementById('currentSiteFocusRow');
   const currentSiteFocusToggle = document.getElementById('currentSiteFocusToggle');
   const currentSiteFocusText = document.getElementById('currentSiteFocusText');
   const siteBehaviorHint = document.getElementById('siteBehaviorHint');
+
+  // DOM Elements - Global Auto-Switch Toggle
   const autoSwitchToggle = document.getElementById('autoSwitchToggle');
   const autoSwitchDescription = document.getElementById('autoSwitchDescription');
   const globalToggleStateBadge = document.getElementById('globalToggleStateBadge');
+
+  // DOM Elements - Lists Navigation Tabs
+  const tabBtnWhitelist = document.getElementById('tabBtnWhitelist');
+  const tabBtnBypass = document.getElementById('tabBtnBypass');
+  const panelWhitelist = document.getElementById('panelWhitelist');
+  const panelBypass = document.getElementById('panelBypass');
   const whitelistCount = document.getElementById('whitelistCount');
+  const bypassCount = document.getElementById('bypassCount');
+
+  // DOM Elements - Whitelist Form & List
   const addDomainForm = document.getElementById('addDomainForm');
   const domainInput = document.getElementById('domainInput');
   const popupNewDomainFocus = document.getElementById('popupNewDomainFocus');
@@ -27,8 +41,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   const whitelistUl = document.getElementById('whitelistUl');
   const emptyWhitelist = document.getElementById('emptyWhitelist');
 
+  // DOM Elements - Complete Bypass Form & List
+  const addBypassForm = document.getElementById('addBypassForm');
+  const bypassInput = document.getElementById('bypassInput');
+  const bypassInputError = document.getElementById('bypassInputError');
+  const bypassUl = document.getElementById('bypassUl');
+  const emptyBypass = document.getElementById('emptyBypass');
+
   let currentSettings = null;
   let activeTabHostname = '';
+  let activeTabName = 'whitelist'; // 'whitelist' or 'bypass'
 
   /**
    * Sets up language from stored preferences or browser default.
@@ -102,25 +124,47 @@ document.addEventListener('DOMContentLoaded', async () => {
       siteStatusBadge.textContent = I18n.t('badgeInactive');
       quickWhitelistBtn.disabled = true;
       quickWhitelistBtn.textContent = I18n.t('btnWhitelist');
+      quickBypassBtn.disabled = true;
+      quickBypassBtn.textContent = I18n.t('btnBypass');
       currentSiteFocusRow.classList.add('hidden');
       siteBehaviorHint.textContent = I18n.t('hintInternal');
     } else {
       currentDomainText.textContent = activeTabHostname;
       quickWhitelistBtn.disabled = false;
+      quickBypassBtn.disabled = false;
+
+      const matchedBypass = DomainMatcher.getMatchedBypassRule(activeTabHostname, currentSettings.bypassList);
+      const isBypassed = Boolean(matchedBypass);
 
       const matchedRule = DomainMatcher.getMatchedRule(activeTabHostname, currentSettings.whitelist);
       const isWhitelisted = Boolean(matchedRule);
 
+      // Bypass button state
+      if (isBypassed) {
+        quickBypassBtn.textContent = I18n.t('btnBypassed');
+        quickBypassBtn.className = 'btn btn-sm btn-bypassed-active';
+        quickBypassBtn.title = I18n.t('titleRemoveBypassCurrent');
+      } else {
+        quickBypassBtn.textContent = I18n.t('btnBypass');
+        quickBypassBtn.className = 'btn btn-sm btn-secondary';
+        quickBypassBtn.title = I18n.t('titleBypassCurrent');
+      }
+
+      // Whitelist button state
       if (isWhitelisted) {
         quickWhitelistBtn.textContent = I18n.t('btnWhitelisted');
         quickWhitelistBtn.className = 'btn btn-sm btn-secondary';
         quickWhitelistBtn.title = I18n.t('titleRemoveCurrent');
 
-        currentSiteFocusRow.classList.remove('hidden');
-        currentSiteFocusToggle.checked = matchedRule.autoFocus;
-        currentSiteFocusText.textContent = matchedRule.autoFocus
-          ? I18n.t('focusOptionForegroundShort')
-          : I18n.t('focusOptionBackgroundShort');
+        if (!isBypassed) {
+          currentSiteFocusRow.classList.remove('hidden');
+          currentSiteFocusToggle.checked = matchedRule.autoFocus;
+          currentSiteFocusText.textContent = matchedRule.autoFocus
+            ? I18n.t('focusOptionForegroundShort')
+            : I18n.t('focusOptionBackgroundShort');
+        } else {
+          currentSiteFocusRow.classList.add('hidden');
+        }
       } else {
         quickWhitelistBtn.textContent = I18n.t('btnWhitelist');
         quickWhitelistBtn.className = 'btn btn-sm btn-primary';
@@ -128,10 +172,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentSiteFocusRow.classList.add('hidden');
       }
 
+      // Precedence: 1. Disabled -> 2. Bypassed -> 3. Whitelisted -> 4. Global
       if (!currentSettings.enabled) {
         siteStatusBadge.className = 'badge badge-gray';
         siteStatusBadge.textContent = I18n.t('badgePaused');
         siteBehaviorHint.textContent = I18n.t('hintPaused');
+      } else if (isBypassed) {
+        // Complete Bypass List has HIGHEST PRECEDENCE!
+        siteStatusBadge.className = 'badge badge-bypassed';
+        siteStatusBadge.textContent = I18n.t('badgeBypassed');
+        siteBehaviorHint.textContent = I18n.t('hintBypassed');
       } else if (isWhitelisted) {
         if (matchedRule.autoFocus) {
           siteStatusBadge.className = 'badge badge-success';
@@ -153,8 +203,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // 5. Whitelist List
+    // 5. Render Lists
     renderWhitelistItems(currentSettings.whitelist);
+    renderBypassItems(currentSettings.bypassList);
   }
 
   /**
@@ -255,17 +306,109 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  function showError(msg) {
+  /**
+   * Renders the list of bypassed domains (Silent List).
+   */
+  function renderBypassItems(bypassList) {
+    bypassUl.innerHTML = '';
+    const list = bypassList || [];
+    bypassCount.textContent = String(list.length);
+
+    if (list.length === 0) {
+      emptyBypass.classList.remove('hidden');
+      bypassUl.classList.add('hidden');
+      return;
+    }
+
+    emptyBypass.classList.add('hidden');
+    bypassUl.classList.remove('hidden');
+
+    list.forEach((entry) => {
+      const domain = typeof entry === 'string' ? entry : entry.domain;
+
+      const li = document.createElement('li');
+      li.className = 'whitelist-item';
+
+      const wrap = document.createElement('div');
+      wrap.className = 'item-domain-wrap';
+
+      const domainSpan = document.createElement('span');
+      domainSpan.className = 'item-domain';
+      domainSpan.textContent = domain;
+      domainSpan.title = domain;
+
+      const tagSpan = document.createElement('span');
+      tagSpan.className = 'subdomain-tag';
+      tagSpan.textContent = I18n.t('subdomainsTag');
+
+      wrap.appendChild(domainSpan);
+      wrap.appendChild(tagSpan);
+
+      // Actions container: Remove button
+      const actionsDiv = document.createElement('div');
+      actionsDiv.className = 'item-controls';
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'btn-remove';
+      removeBtn.innerHTML = '&times;';
+      removeBtn.title = I18n.t('removeBypassAria', domain);
+      removeBtn.setAttribute('aria-label', I18n.t('removeBypassAria', domain));
+
+      removeBtn.addEventListener('click', async () => {
+        await StorageManager.removeBypassDomain(domain);
+        await renderUI();
+      });
+
+      actionsDiv.appendChild(removeBtn);
+
+      li.appendChild(wrap);
+      li.appendChild(actionsDiv);
+      bypassUl.appendChild(li);
+    });
+  }
+
+  function showWhitelistError(msg) {
     inputError.textContent = msg;
     inputError.classList.remove('hidden');
   }
 
-  function hideError() {
+  function hideWhitelistError() {
     inputError.textContent = '';
     inputError.classList.add('hidden');
   }
 
+  function showBypassError(msg) {
+    bypassInputError.textContent = msg;
+    bypassInputError.classList.remove('hidden');
+  }
+
+  function hideBypassError() {
+    bypassInputError.textContent = '';
+    bypassInputError.classList.add('hidden');
+  }
+
+  /**
+   * Switches active list panel in popup.
+   */
+  function switchTab(tab) {
+    activeTabName = tab;
+    if (tab === 'whitelist') {
+      tabBtnWhitelist.classList.add('active');
+      tabBtnBypass.classList.remove('active');
+      panelWhitelist.classList.remove('hidden');
+      panelBypass.classList.add('hidden');
+    } else {
+      tabBtnWhitelist.classList.remove('active');
+      tabBtnBypass.classList.add('active');
+      panelWhitelist.classList.add('hidden');
+      panelBypass.classList.remove('hidden');
+    }
+  }
+
   // Event Listeners
+
+  tabBtnWhitelist.addEventListener('click', () => switchTab('whitelist'));
+  tabBtnBypass.addEventListener('click', () => switchTab('bypass'));
 
   // Language Selector
   langSelect.addEventListener('change', async () => {
@@ -311,20 +454,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     await renderUI();
   });
 
-  // Add Domain Form
+  // Quick Bypass button for active tab
+  quickBypassBtn.addEventListener('click', async () => {
+    if (!activeTabHostname) return;
+
+    const matchedBypass = DomainMatcher.getMatchedBypassRule(activeTabHostname, currentSettings.bypassList);
+    if (matchedBypass) {
+      await StorageManager.removeBypassDomain(matchedBypass.domain);
+    } else {
+      await StorageManager.addBypassDomain(activeTabHostname);
+    }
+    await renderUI();
+  });
+
+  // Add Domain Form (Whitelist)
   addDomainForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    hideError();
+    hideWhitelistError();
 
     const rawInput = domainInput.value.trim();
     if (!rawInput) {
-      showError(I18n.t('errEnterDomain'));
+      showWhitelistError(I18n.t('errEnterDomain'));
       return;
     }
 
     const normalized = DomainMatcher.normalizeDomain(rawInput);
     if (!normalized || !DomainMatcher.isValidDomain(normalized)) {
-      showError(I18n.t('errInvalidDomain'));
+      showWhitelistError(I18n.t('errInvalidDomain'));
       return;
     }
 
@@ -334,19 +490,57 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     if (exists) {
-      showError(I18n.t('errDomainExists', normalized));
+      showWhitelistError(I18n.t('errDomainExists', normalized));
       return;
     }
 
     const autoFocus = popupNewDomainFocus ? popupNewDomainFocus.value === 'true' : true;
     const result = await StorageManager.addWhitelistDomain(rawInput, autoFocus);
     if (!result.success) {
-      showError(result.error || I18n.t('errInvalidDomain'));
+      showWhitelistError(result.error || I18n.t('errInvalidDomain'));
       return;
     }
 
     domainInput.value = '';
-    hideError();
+    hideWhitelistError();
+    await renderUI();
+  });
+
+  // Add Bypass Form
+  addBypassForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideBypassError();
+
+    const rawInput = bypassInput.value.trim();
+    if (!rawInput) {
+      showBypassError(I18n.t('errEnterDomain'));
+      return;
+    }
+
+    const normalized = DomainMatcher.normalizeDomain(rawInput);
+    if (!normalized || !DomainMatcher.isValidDomain(normalized)) {
+      showBypassError(I18n.t('errInvalidDomain'));
+      return;
+    }
+
+    const exists = (currentSettings.bypassList || []).some(entry => {
+      const d = typeof entry === 'string' ? entry : entry.domain;
+      return d === normalized;
+    });
+
+    if (exists) {
+      showBypassError(I18n.t('errBypassDomainExists', normalized));
+      return;
+    }
+
+    const result = await StorageManager.addBypassDomain(rawInput);
+    if (!result.success) {
+      showBypassError(result.error || I18n.t('errInvalidDomain'));
+      return;
+    }
+
+    bypassInput.value = '';
+    hideBypassError();
     await renderUI();
   });
 

@@ -133,7 +133,7 @@
   }
 
   /**
-   * Helper to extract the domain string from a whitelist entry (either string or object).
+   * Helper to extract the domain string from a list entry (either string or object).
    *
    * @param {string|{domain: string}} rule
    * @returns {string}
@@ -143,6 +143,58 @@
     if (typeof rule === 'string') return rule;
     if (typeof rule === 'object' && typeof rule.domain === 'string') return rule.domain;
     return '';
+  }
+
+  /**
+   * Checks if currentHost matches any entry in the bypassList array.
+   * Supports both string arrays and object arrays ({ domain: string }).
+   *
+   * @param {string} currentHost - Current webpage hostname
+   * @param {Array<string|{domain: string}>} bypassList - Array of bypassed domain entries
+   * @returns {boolean} True if hostname matches an entry in the bypass list
+   */
+  function isDomainBypassed(currentHost, bypassList) {
+    if (!Array.isArray(bypassList) || bypassList.length === 0) {
+      return false;
+    }
+
+    const host = normalizeDomain(currentHost);
+    if (!host) {
+      return false;
+    }
+
+    return bypassList.some(rule => {
+      const ruleDomain = getRuleDomain(rule);
+      return isDomainMatch(host, ruleDomain);
+    });
+  }
+
+  /**
+   * Finds the specific matching bypass rule for the given hostname.
+   * Returns a normalized rule object with domain, or null if no match.
+   *
+   * @param {string} currentHost - Current webpage hostname
+   * @param {Array<string|{domain: string}>} bypassList
+   * @returns {{ domain: string } | null}
+   */
+  function getMatchedBypassRule(currentHost, bypassList) {
+    if (!Array.isArray(bypassList) || bypassList.length === 0) {
+      return null;
+    }
+
+    const host = normalizeDomain(currentHost);
+    if (!host) {
+      return null;
+    }
+
+    for (const rule of bypassList) {
+      const ruleDomain = getRuleDomain(rule);
+      if (isDomainMatch(host, ruleDomain)) {
+        return { domain: ruleDomain };
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -209,12 +261,15 @@
    * Decision Precedence:
    * 1. Extension Master Toggle (`enabled`):
    *    If disabled (false), returns false (link interception not handled).
-   * 2. Per-Website Whitelist Setting:
+   * 2. Complete Bypass List (`bypassList`):
+   *    If currentHostname matches an entry in the Complete Bypass List, returns false.
+   *    The Complete Bypass List has HIGHEST PRECEDENCE and overrides all whitelist and global settings.
+   * 3. Per-Website Whitelist Setting:
    *    If currentHostname matches a whitelist entry, that website's individual focus setting
    *    takes precedence, working independently of the global focus toggle:
    *    - When enabled (autoFocus: true), returns true (immediately focuses the new tab).
    *    - When disabled (autoFocus: false), returns false (opens in background, keeping current tab active).
-   * 3. Global Focus Toggle (`autoSwitch`):
+   * 4. Global Focus Toggle (`autoSwitch`):
    *    If the website is NOT in the whitelist, the global focus toggle controls the behavior:
    *    - When enabled (true), returns true (focuses the new tab).
    *    - When disabled (false), returns false (opens in background).
@@ -223,6 +278,7 @@
    * @param {boolean} [params.enabled=true] - Master extension toggle
    * @param {boolean} [params.autoSwitch=false] - Global focus toggle (switch to new tab)
    * @param {Array<string|{domain: string, autoFocus?: boolean}>} [params.whitelist=[]] - Whitelisted domain entries
+   * @param {Array<string|{domain: string}>} [params.bypassList=[]] - Complete Bypass List domain entries
    * @param {string} [params.currentHostname=''] - Hostname of the current page where click occurred
    * @returns {boolean} True if tab should be active/focused, false if tab should remain in background
    */
@@ -231,22 +287,28 @@
       enabled = true,
       autoSwitch = false,
       whitelist = [],
+      bypassList = [],
       currentHostname = ''
     } = params;
 
-    // If extension is disabled, fallback
+    // 1. If extension is disabled, fallback
     if (!enabled) {
       return false;
     }
 
-    // Check if the current website matches any entry in the whitelist
+    // 2. Complete Bypass List takes absolute precedence over all other settings
+    if (isDomainBypassed(currentHostname, bypassList)) {
+      return false;
+    }
+
+    // 3. Check if the current website matches any entry in the whitelist
     const matchedRule = getMatchedRule(currentHostname, whitelist);
     if (matchedRule) {
       // Individual per-website focus setting overrides the global focus toggle
       return Boolean(matchedRule.autoFocus);
     }
 
-    // Fallback to global focus toggle
+    // 4. Fallback to global focus toggle
     return Boolean(autoSwitch);
   }
 
@@ -254,6 +316,8 @@
     normalizeDomain,
     isValidDomain,
     isDomainMatch,
+    isDomainBypassed,
+    getMatchedBypassRule,
     isDomainWhitelisted,
     getMatchedRule,
     shouldSwitchTab

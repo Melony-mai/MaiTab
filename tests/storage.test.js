@@ -30,6 +30,7 @@ test('StorageManager', async (t) => {
       enabled: true,
       autoSwitch: false,
       whitelist: [],
+      bypassList: [],
       openNextToCurrent: true,
       language: 'auto'
     });
@@ -105,7 +106,7 @@ test('StorageManager', async (t) => {
     ]);
   });
 
-  await t.test('rejects duplicate domains', async () => {
+  await t.test('rejects duplicate domains in whitelist', async () => {
     const mock = createMockStorage();
     await StorageManager.addWhitelistDomain('example.com', mock);
     const res = await StorageManager.addWhitelistDomain('EXAMPLE.COM', mock);
@@ -113,7 +114,7 @@ test('StorageManager', async (t) => {
     assert.match(res.error, /already in your whitelist/);
   });
 
-  await t.test('rejects invalid domain format', async () => {
+  await t.test('rejects invalid domain format in whitelist', async () => {
     const mock = createMockStorage();
     const res = await StorageManager.addWhitelistDomain('invalid domain name!!', mock);
     assert.strictEqual(res.success, false);
@@ -142,5 +143,70 @@ test('StorageManager', async (t) => {
     await StorageManager.resetToDefaults(mock);
     settings = await StorageManager.getSettings(mock);
     assert.deepStrictEqual(settings, StorageManager.DEFAULT_SETTINGS);
+  });
+
+  // Complete Bypass List (Silent List) tests
+  await t.test('adds valid domain to Complete Bypass List with normalization and sorting', async () => {
+    const mock = createMockStorage();
+    const res1 = await StorageManager.addBypassDomain('https://google.com/search?q=test', mock);
+    assert.strictEqual(res1.success, true);
+    assert.strictEqual(res1.domain, 'google.com');
+    assert.deepStrictEqual(res1.bypassList, [{ domain: 'google.com' }]);
+
+    const res2 = await StorageManager.addBypassDomain('*.apple.com', mock);
+    assert.strictEqual(res2.success, true);
+    assert.strictEqual(res2.domain, 'apple.com');
+    // alphabetical sort
+    assert.deepStrictEqual(res2.bypassList, [
+      { domain: 'apple.com' },
+      { domain: 'google.com' }
+    ]);
+
+    const retrieved = await StorageManager.getSettings(mock);
+    assert.deepStrictEqual(retrieved.bypassList, [
+      { domain: 'apple.com' },
+      { domain: 'google.com' }
+    ]);
+  });
+
+  await t.test('rejects duplicate domains in Complete Bypass List', async () => {
+    const mock = createMockStorage();
+    await StorageManager.addBypassDomain('google.com', mock);
+    const res = await StorageManager.addBypassDomain('GOOGLE.COM', mock);
+    assert.strictEqual(res.success, false);
+    assert.match(res.error, /already in your Complete Bypass List/);
+  });
+
+  await t.test('rejects invalid domain format in Complete Bypass List', async () => {
+    const mock = createMockStorage();
+    const res = await StorageManager.addBypassDomain('not a domain!!', mock);
+    assert.strictEqual(res.success, false);
+    assert.match(res.error, /Invalid domain format/);
+  });
+
+  await t.test('removes domain from Complete Bypass List', async () => {
+    const mock = createMockStorage();
+    await StorageManager.addBypassDomain('google.com', mock);
+    await StorageManager.addBypassDomain('bing.com', mock);
+
+    const res = await StorageManager.removeBypassDomain('google.com', mock);
+    assert.strictEqual(res.success, true);
+    assert.deepStrictEqual(res.bypassList, [{ domain: 'bing.com' }]);
+
+    const settings = await StorageManager.getSettings(mock);
+    assert.deepStrictEqual(settings.bypassList, [{ domain: 'bing.com' }]);
+  });
+
+  await t.test('clears Complete Bypass List', async () => {
+    const mock = createMockStorage();
+    await StorageManager.addBypassDomain('google.com', mock);
+    await StorageManager.addBypassDomain('yahoo.com', mock);
+
+    const res = await StorageManager.clearBypassList(mock);
+    assert.strictEqual(res.success, true);
+    assert.deepStrictEqual(res.bypassList, []);
+
+    const settings = await StorageManager.getSettings(mock);
+    assert.deepStrictEqual(settings.bypassList, []);
   });
 });

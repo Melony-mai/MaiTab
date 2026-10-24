@@ -17,6 +17,7 @@
     enabled: true,             // Master toggle: enable/disable link interception
     autoSwitch: false,         // Global focus toggle: automatically switch focus to new tab
     whitelist: [],             // Whitelisted domains with per-entry focus options: [{ domain: string, autoFocus: boolean }]
+    bypassList: [],            // Complete Bypass List (Silent List): [{ domain: string }]
     openNextToCurrent: true,   // Place new tab immediately adjacent to current tab
     language: 'auto'           // Language preference: 'auto', 'en', 'zh-CN', 'ja'
   };
@@ -94,6 +95,33 @@
         }
       });
       normalized.whitelist = Array.from(map.values()).sort((a, b) =>
+        a.domain.localeCompare(b.domain)
+      );
+    }
+
+    if (!Array.isArray(normalized.bypassList)) {
+      normalized.bypassList = [];
+    } else {
+      // Normalize and deduplicate bypassList entries
+      const bypassMap = new Map();
+      normalized.bypassList.forEach(item => {
+        let rawDomain = '';
+        if (typeof item === 'string') {
+          rawDomain = item;
+        } else if (item && typeof item === 'object') {
+          rawDomain = item.domain || '';
+        }
+
+        const norm = DomainMatcher ? DomainMatcher.normalizeDomain(rawDomain) : rawDomain.trim().toLowerCase();
+        if (norm) {
+          if (!bypassMap.has(norm)) {
+            bypassMap.set(norm, {
+              domain: norm
+            });
+          }
+        }
+      });
+      normalized.bypassList = Array.from(bypassMap.values()).sort((a, b) =>
         a.domain.localeCompare(b.domain)
       );
     }
@@ -282,6 +310,90 @@
   }
 
   /**
+   * Adds a domain to the Complete Bypass List (Silent List).
+   * Normalizes the domain and validates it before persisting.
+   *
+   * @param {string} domainInput - Domain or URL to bypass
+   * @param {Object} [customStorage] - Optional storage adapter for testing
+   * @returns {Promise<{ success: boolean, domain?: string, bypassList?: Array<{domain: string}>, error?: string }>}
+   */
+  async function addBypassDomain(domainInput, customStorage) {
+    if (!DomainMatcher) {
+      return { success: false, error: 'DomainMatcher module is unavailable.' };
+    }
+
+    const normalized = DomainMatcher.normalizeDomain(domainInput);
+    if (!normalized || !DomainMatcher.isValidDomain(normalized)) {
+      return {
+        success: false,
+        error: 'Invalid domain format. Enter a valid domain such as "example.com" or "sub.domain.org".'
+      };
+    }
+
+    const settings = await getSettings(customStorage);
+    const existing = settings.bypassList || [];
+
+    const exists = existing.some(entry => {
+      const d = typeof entry === 'string' ? entry : entry.domain;
+      return d === normalized;
+    });
+
+    if (exists) {
+      return {
+        success: false,
+        error: `"${normalized}" is already in your Complete Bypass List.`,
+        domain: normalized,
+        bypassList: existing
+      };
+    }
+
+    const newEntry = { domain: normalized };
+    const updatedBypassList = [...existing, newEntry].sort((a, b) =>
+      a.domain.localeCompare(b.domain)
+    );
+
+    await saveSettings({ bypassList: updatedBypassList }, customStorage);
+
+    return {
+      success: true,
+      domain: normalized,
+      bypassList: updatedBypassList
+    };
+  }
+
+  /**
+   * Removes a domain from the Complete Bypass List.
+   *
+   * @param {string} domainInput - Domain to remove
+   * @param {Object} [customStorage]
+   * @returns {Promise<{ success: boolean, bypassList: Array<{domain: string}> }>}
+   */
+  async function removeBypassDomain(domainInput, customStorage) {
+    const normalized = DomainMatcher ? DomainMatcher.normalizeDomain(domainInput) : domainInput.trim().toLowerCase();
+    const settings = await getSettings(customStorage);
+
+    const updatedBypassList = (settings.bypassList || []).filter(entry => {
+      const d = typeof entry === 'string' ? entry : entry.domain;
+      return d !== normalized;
+    });
+
+    await saveSettings({ bypassList: updatedBypassList }, customStorage);
+
+    return {
+      success: true,
+      bypassList: updatedBypassList
+    };
+  }
+
+  /**
+   * Clears all entries from the Complete Bypass List.
+   */
+  async function clearBypassList(customStorage) {
+    await saveSettings({ bypassList: [] }, customStorage);
+    return { success: true, bypassList: [] };
+  }
+
+  /**
    * Resets all settings to factory defaults.
    */
   async function resetToDefaults(customStorage) {
@@ -312,6 +424,9 @@
     updateWhitelistDomainFocus,
     removeWhitelistDomain,
     clearWhitelist,
+    addBypassDomain,
+    removeBypassDomain,
+    clearBypassList,
     resetToDefaults,
     onSettingsChanged
   };
