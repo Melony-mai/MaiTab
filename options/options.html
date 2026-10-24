@@ -105,6 +105,12 @@
             autocomplete="off"
             spellcheck="false"
           >
+          <div class="focus-select-wrap">
+            <select id="optNewDomainFocus" class="select-focus" aria-label="Tab Focus Option">
+              <option value="true" data-i18n="focusOptionForeground">Foreground (Focus ON)</option>
+              <option value="false" data-i18n="focusOptionBackground">Background (Focus OFF)</option>
+            </select>
+          </div>
           <button type="submit" class="btn btn-primary" data-i18n="btnAddWebsite">Add Website</button>
         </form>
         <div id="optInputError" class="input-error hidden"></div>
@@ -131,6 +137,7 @@
               <tr>
                 <th data-i18n="thDomainPattern">Domain Pattern</th>
                 <th data-i18n="thMatchingScope">Matching Scope</th>
+                <th data-i18n="thFocusOption" style="width: 170px;">Auto-Focus Tab</th>
                 <th data-i18n="thAction" style="width: 80px; text-align: right;">Action</th>
               </tr>
             </thead>
@@ -188,6 +195,11 @@
             <li data-i18n="docRuleExact" data-i18n-html="true"><strong>Exact Match:</strong> <code>example.com</code> matches visits on <code>example.com</code>.</li>
             <li data-i18n="docRuleSubdomains" data-i18n-html="true"><strong>Subdomain Matching:</strong> <code>example.com</code> also automatically matches <code>news.example.com</code>, <code>blog.example.com</code>, and any deep subdomains.</li>
             <li data-i18n="docRuleSafety" data-i18n-html="true"><strong>Protection Against False Positives:</strong> <code>example.com</code> will <em>never</em> match <code>fakeexample.com</code> or <code>example.com.phishing.org</code>.</li>
+          </ul>
+
+          <h3 data-i18n="docPrecedenceTitle">Setting Precedence & Independence:</h3>
+          <ul>
+            <li data-i18n="docPrecedenceDesc" data-i18n-html="true"><strong>Precedence:</strong> Per-website focus options in the whitelist strictly override the Global Focus Toggle. If a website is whitelisted with focus disabled, links will always open in the background even if Global Focus is enabled. If a website is whitelisted with focus enabled, links will always receive focus even if Global Focus is disabled. For non-whitelisted websites, the Global Focus Toggle applies.</li>
           </ul>
 
           <h3 data-i18n="docLinkSafetyTitle">Link Click Safety:</h3>

@@ -1,6 +1,6 @@
 # MaiTab - Smart Tab Manager for Google Chrome
 
-**MaiTab** is a lightweight, zero-dependency Google Chrome extension built strictly on **Manifest V3**. It enhances link-clicking behavior by opening left-clicked links in new tabs without interrupting your browsing flow on the current page. It features an automatic tab-switching toggle, a subdomain-aware website whitelist override, and comprehensive multilingual support for **English**, **Chinese (Simplified)**, and **Japanese**.
+**MaiTab** is a lightweight, zero-dependency Google Chrome extension built strictly on **Manifest V3**. It enhances link-clicking behavior by opening left-clicked links in new tabs without interrupting your browsing flow on the current page. It features a configurable **Global Focus Toggle**, a subdomain-aware **Website Whitelist with Independent Per-Website Focus Options**, and comprehensive multilingual support for **English**, **Chinese (Simplified)**, and **Japanese**.
 
 ---
 
@@ -17,16 +17,21 @@
      - Interactive form controls (`<button>`, `<input>`, `<textarea>`, `<select>`), `contenteditable` elements, and `download` links continue functioning normally.
      - Mouse drag and text selection are tracked to prevent accidental tab openings when highlighting text inside links.
 
-2. **Automatic Tab Switching Toggle**
-   - Easily accessible in both the extension popup and options page.
-   - **Enabled (ON):** Links clicked on any website open in new tabs and immediately switch focus to them.
-   - **Disabled (OFF, Default):** Links open silently in new background tabs, leaving you on your current page.
-   - State persists across browser restarts via `chrome.storage.sync` (with automatic `chrome.storage.local` fallback).
+2. **Global Focus Toggle**
+   - Centrally controls whether a newly opened tab automatically receives focus when left-clicking a link across unlisted websites.
+   - **Enabled (ON):** Left-clicking a link opens the destination in a new tab and immediately switches focus to that tab.
+   - **Disabled (OFF, Default):** Left-clicking a link opens the destination in a new background tab, keeping the current tab active.
+   - Clearly labeled and integrated into both the popup and options interfaces.
+   - Persists reliably across browser restarts via `chrome.storage.sync` (with automatic `chrome.storage.local` fallback).
 
-3. **Domain Whitelist Override**
-   - Configurable list of websites that **always switch focus** to the newly opened tab, even when the global switch toggle is disabled.
+3. **Per-Website Whitelist Focus Options & Overrides**
+   - Each whitelisted website features an **independent focus option** to control whether its newly opened tabs receive focus.
+   - **Independent of Global Toggle:** The per-website setting works independently of the global focus toggle, allowing full customization for specific domains.
+     - **Focus Enabled (Foreground):** Links clicked on that website open in a new tab and immediately receive focus, even when the Global Focus Toggle is OFF.
+     - **Focus Disabled (Background):** Links clicked on that website open in a new background tab without switching away, even when the Global Focus Toggle is ON.
    - **Subdomain-Aware Domain Matching:** Whitelisting `example.com` automatically covers `news.example.com` and `sub.example.com`, while avoiding false positives like `fakeexample.com` or `example.com.evil.org`.
-   - **One-Click Whitelisting:** The popup automatically detects the current website's domain and provides a "+ Whitelist" / "✓ Whitelisted" button to toggle its whitelist status in a single click.
+   - **Instant Persistence & Application:** Changes apply immediately without requiring page reloads and persist across browser restarts.
+   - **One-Click Whitelisting & In-Popup Toggle:** The popup detects the current website's domain, provides a "+ Whitelist" / "✓ Whitelisted" button, and displays an inline focus toggle for instant adjustment.
 
 4. **Full Multilingual Support (i18n)**
    - Complete localization across **English (en)**, **Chinese Simplified (zh-CN)**, and **Japanese (ja)**.
@@ -37,18 +42,26 @@
 
 5. **Interactive Domain Match Tester & Whitelist Import/Export**
    - Dedicated options page includes an interactive tester to simulate how any URL or domain will behave under your current settings.
-   - Export and import your whitelist in JSON format for easy backups and synchronization across devices.
+   - Export and import your whitelist in JSON format (including per-domain focus preferences) for easy backups and synchronization across devices.
 
 ---
 
-## Behavior Decision Matrix
+## Behavior Decision Matrix & Setting Precedence
 
-| Global Auto-Switch Toggle | Is Current Website Whitelisted? | Resulting Link Behavior |
-| :--- | :--- | :--- |
-| **Enabled (ON)** | Yes | Opens in **Foreground Tab** (switches focus) |
-| **Enabled (ON)** | No | Opens in **Foreground Tab** (switches focus) |
-| **Disabled (OFF)** | **Yes (Override)** | Opens in **Foreground Tab** (switches focus) |
-| **Disabled (OFF)** | No | Opens in **Background Tab** (stays on current page) |
+The extension determines tab focus behavior using a strict, predictable precedence hierarchy:
+
+1. **Extension Master Toggle (`enabled`):** When turned off, link interception is paused and normal browser link navigation occurs.
+2. **Per-Website Whitelist Setting:** If the active page matches an entry in the whitelist, that entry's individual focus option governs the behavior and **overrides the Global Focus Toggle**.
+3. **Global Focus Toggle (`autoSwitch`):** If the active page is not in the whitelist, the Global Focus Toggle determines whether the tab opens in the foreground or background.
+
+| Global Focus Toggle | Whitelist Match Status | Website Focus Setting | Resulting Link Behavior |
+| :--- | :--- | :--- | :--- |
+| **Enabled (ON)** | Match | **Focus ON** | Opens in **Foreground Tab** (immediate focus) |
+| **Enabled (ON)** | Match | **Focus OFF** | Opens in **Background Tab** (whitelist override) |
+| **Enabled (ON)** | No Match | N/A | Opens in **Foreground Tab** (global focus ON) |
+| **Disabled (OFF)** | Match | **Focus ON** | Opens in **Foreground Tab** (whitelist override) |
+| **Disabled (OFF)** | Match | **Focus OFF** | Opens in **Background Tab** (stays in background) |
+| **Disabled (OFF)** | No Match | N/A | Opens in **Background Tab** (global focus OFF) |
 
 ---
 
@@ -77,16 +90,24 @@ To install and run MaiTab in Google Chrome:
 Click the MaiTab icon in the Chrome toolbar:
 - **Language Selector (Top Bar):** Switch dynamically between English, 简体中文, and 日本語.
 - **Master Switch (Top Right):** Instantly enable or pause link interception without uninstalling.
-- **Current Website Card:** View the active tab's hostname and status badge (`Foreground`, `Foreground (Whitelisted)`, or `Background`). Click **+ Whitelist** to add or remove the current website instantly.
-- **Switch to New Tab Automatically:** Toggle global foreground vs. background tab opening.
-- **Automatic Switching Whitelist:** View, add, or delete domain rules with live counter and subdomain badges.
+- **Current Website Card:** View the active tab's hostname and status badge (`Foreground`, `Foreground (Whitelisted)`, `Background (Whitelisted)`, or `Background`).
+  - Click **+ Whitelist** to add or remove the current website instantly.
+  - When whitelisted, an inline **Tab Focus** switch allows toggling foreground vs. background opening directly for that site.
+- **Global Tab Focus:** Toggle global foreground vs. background tab opening for unlisted websites.
+- **Automatic Switching Whitelist:**
+  - View whitelisted domain rules with live counter and subdomain badges.
+  - Toggle auto-focus independently for each entry with an inline switch.
+  - Add new domain rules with preferred initial focus settings.
+  - Delete domain rules with the &times; button.
 
 ### 2. Options Page
 Right-click the extension icon and select **Options**, or click **Options ↗** inside the popup:
-- Configure general preferences (Master switch, Global tab switching, Adjacent tab positioning).
+- Configure general preferences (Master switch, Global tab focus, Adjacent tab positioning).
+- Manage website whitelist with dedicated **Auto-Focus Tab** switches for each domain.
+- Add domains with custom focus options (Foreground vs. Background).
 - Search and filter whitelist domains.
-- Bulk export and import whitelist entries in JSON format.
-- Test any URL using the **Interactive Domain Match Tester** to verify how your rules apply.
+- Bulk export and import whitelist entries in JSON format (including focus preferences).
+- Test any URL using the **Interactive Domain Match Tester** to verify which rule matches and the resulting tab behavior.
 
 ---
 

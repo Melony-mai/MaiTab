@@ -133,10 +133,24 @@
   }
 
   /**
+   * Helper to extract the domain string from a whitelist entry (either string or object).
+   *
+   * @param {string|{domain: string}} rule
+   * @returns {string}
+   */
+  function getRuleDomain(rule) {
+    if (!rule) return '';
+    if (typeof rule === 'string') return rule;
+    if (typeof rule === 'object' && typeof rule.domain === 'string') return rule.domain;
+    return '';
+  }
+
+  /**
    * Checks if currentHost matches any entry in the whitelist array.
+   * Supports both legacy string arrays and modern object arrays ({ domain, autoFocus }).
    *
    * @param {string} currentHost - Current webpage hostname
-   * @param {string[]} whitelist - Array of whitelisted domain strings
+   * @param {Array<string|{domain: string, autoFocus?: boolean}>} whitelist - Array of whitelisted domain entries
    * @returns {boolean}
    */
   function isDomainWhitelisted(currentHost, whitelist) {
@@ -149,21 +163,66 @@
       return false;
     }
 
-    return whitelist.some(rule => isDomainMatch(host, rule));
+    return whitelist.some(rule => {
+      const ruleDomain = getRuleDomain(rule);
+      return isDomainMatch(host, ruleDomain);
+    });
   }
 
   /**
-   * Evaluates whether a newly opened tab should be focused (active: true) or kept in background (active: false).
+   * Finds the specific matching whitelist rule for the given hostname.
+   * Returns a normalized rule object with domain and autoFocus status, or null if no match.
    *
-   * Core logic:
-   * - If global toggle `autoSwitch` is enabled (true), links switch to foreground tab for ALL websites.
-   * - If global toggle `autoSwitch` is disabled (false), links clicked on whitelisted websites still switch to foreground,
-   *   while links on non-whitelisted websites open in the background.
+   * @param {string} currentHost - Current webpage hostname
+   * @param {Array<string|{domain: string, autoFocus?: boolean}>} whitelist
+   * @returns {{ domain: string, autoFocus: boolean } | null}
+   */
+  function getMatchedRule(currentHost, whitelist) {
+    if (!Array.isArray(whitelist) || whitelist.length === 0) {
+      return null;
+    }
+
+    const host = normalizeDomain(currentHost);
+    if (!host) {
+      return null;
+    }
+
+    for (const rule of whitelist) {
+      const ruleDomain = getRuleDomain(rule);
+      if (isDomainMatch(host, ruleDomain)) {
+        const autoFocus = typeof rule === 'object' && rule !== null && 'autoFocus' in rule
+          ? Boolean(rule.autoFocus)
+          : true; // Default autoFocus is true for legacy string or unspecified entries
+        return {
+          domain: ruleDomain,
+          autoFocus
+        };
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Evaluates whether a newly opened tab should receive focus (active: true) or remain in background (active: false).
+   *
+   * Decision Precedence:
+   * 1. Extension Master Toggle (`enabled`):
+   *    If disabled (false), returns false (link interception not handled).
+   * 2. Per-Website Whitelist Setting:
+   *    If currentHostname matches a whitelist entry, that website's individual focus setting
+   *    takes precedence, working independently of the global focus toggle:
+   *    - When enabled (autoFocus: true), returns true (immediately focuses the new tab).
+   *    - When disabled (autoFocus: false), returns false (opens in background, keeping current tab active).
+   * 3. Global Focus Toggle (`autoSwitch`):
+   *    If the website is NOT in the whitelist, the global focus toggle controls the behavior:
+   *    - When enabled (true), returns true (focuses the new tab).
+   *    - When disabled (false), returns false (opens in background).
    *
    * @param {Object} params
    * @param {boolean} [params.enabled=true] - Master extension toggle
-   * @param {boolean} [params.autoSwitch=false] - Global tab switching toggle
-   * @param {string[]} [params.whitelist=[]] - Whitelisted domains array
+   * @param {boolean} [params.autoSwitch=false] - Global focus toggle (switch to new tab)
+   * @param {Array<string|{domain: string, autoFocus?: boolean}>} [params.whitelist=[]] - Whitelisted domain entries
    * @param {string} [params.currentHostname=''] - Hostname of the current page where click occurred
    * @returns {boolean} True if tab should be active/focused, false if tab should remain in background
    */
@@ -175,18 +234,20 @@
       currentHostname = ''
     } = params;
 
-    // If extension is disabled, fallback (though content script wouldn't trigger)
+    // If extension is disabled, fallback
     if (!enabled) {
       return false;
     }
 
-    // Global toggle enabled: all sites automatically switch focus to new tab
-    if (autoSwitch === true) {
-      return true;
+    // Check if the current website matches any entry in the whitelist
+    const matchedRule = getMatchedRule(currentHostname, whitelist);
+    if (matchedRule) {
+      // Individual per-website focus setting overrides the global focus toggle
+      return Boolean(matchedRule.autoFocus);
     }
 
-    // Global toggle disabled: whitelist acts as an override
-    return isDomainWhitelisted(currentHostname, whitelist);
+    // Fallback to global focus toggle
+    return Boolean(autoSwitch);
   }
 
   return {
@@ -194,6 +255,7 @@
     isValidDomain,
     isDomainMatch,
     isDomainWhitelisted,
+    getMatchedRule,
     shouldSwitchTab
   };
 });

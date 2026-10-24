@@ -83,88 +83,161 @@ test('DomainMatcher.isDomainWhitelisted', async (t) => {
   assert.strictEqual(DomainMatcher.isDomainWhitelisted('ycombinator.com', whitelist), false);
 });
 
-test('DomainMatcher.shouldSwitchTab decision logic', async (t) => {
-  const whitelist = ['important.org', 'docs.python.org'];
+test('DomainMatcher.getMatchedRule', async (t) => {
+  const whitelist = [
+    { domain: 'github.com', autoFocus: true },
+    { domain: 'reddit.com', autoFocus: false },
+    'docs.python.org' // legacy string format
+  ];
 
-  // 1. When global toggle is enabled (autoSwitch = true):
-  // All websites switch to foreground, whether whitelisted or not!
-  assert.strictEqual(
-    DomainMatcher.shouldSwitchTab({
-      enabled: true,
-      autoSwitch: true,
-      whitelist,
-      currentHostname: 'random-blog.com'
-    }),
-    true,
-    'Global toggle ON: non-whitelisted site should switch'
-  );
+  await t.test('finds exact domain rule with configured autoFocus', () => {
+    const gh = DomainMatcher.getMatchedRule('github.com', whitelist);
+    assert.deepStrictEqual(gh, { domain: 'github.com', autoFocus: true });
 
-  assert.strictEqual(
-    DomainMatcher.shouldSwitchTab({
-      enabled: true,
-      autoSwitch: true,
-      whitelist,
-      currentHostname: 'important.org'
-    }),
-    true,
-    'Global toggle ON: whitelisted site should switch'
-  );
+    const reddit = DomainMatcher.getMatchedRule('reddit.com', whitelist);
+    assert.deepStrictEqual(reddit, { domain: 'reddit.com', autoFocus: false });
+  });
 
-  // 2. When global toggle is disabled (autoSwitch = false):
-  // Whitelisted websites MUST switch to foreground!
-  assert.strictEqual(
-    DomainMatcher.shouldSwitchTab({
-      enabled: true,
-      autoSwitch: false,
-      whitelist,
-      currentHostname: 'important.org'
-    }),
-    true,
-    'Global toggle OFF: whitelisted site must switch'
-  );
+  await t.test('finds subdomain rule with parent focus settings', () => {
+    const gist = DomainMatcher.getMatchedRule('gist.github.com', whitelist);
+    assert.deepStrictEqual(gist, { domain: 'github.com', autoFocus: true });
 
-  assert.strictEqual(
-    DomainMatcher.shouldSwitchTab({
-      enabled: true,
-      autoSwitch: false,
-      whitelist,
-      currentHostname: 'sub.important.org'
-    }),
-    true,
-    'Global toggle OFF: whitelisted subdomain must switch'
-  );
+    const subReddit = DomainMatcher.getMatchedRule('old.reddit.com', whitelist);
+    assert.deepStrictEqual(subReddit, { domain: 'reddit.com', autoFocus: false });
+  });
 
-  // Non-whitelisted websites MUST NOT switch (stay in background)!
-  assert.strictEqual(
-    DomainMatcher.shouldSwitchTab({
-      enabled: true,
-      autoSwitch: false,
-      whitelist,
-      currentHostname: 'random-blog.com'
-    }),
-    false,
-    'Global toggle OFF: non-whitelisted site must stay in background'
-  );
+  await t.test('defaults legacy string entry to autoFocus: true', () => {
+    const py = DomainMatcher.getMatchedRule('docs.python.org', whitelist);
+    assert.deepStrictEqual(py, { domain: 'docs.python.org', autoFocus: true });
+  });
 
-  assert.strictEqual(
-    DomainMatcher.shouldSwitchTab({
-      enabled: true,
-      autoSwitch: false,
-      whitelist,
-      currentHostname: 'fakeimportant.org'
-    }),
-    false,
-    'Global toggle OFF: fake prefix site must stay in background'
-  );
+  await t.test('returns null when no rule matches', () => {
+    assert.strictEqual(DomainMatcher.getMatchedRule('wikipedia.org', whitelist), null);
+    assert.strictEqual(DomainMatcher.getMatchedRule('evilgithub.com', whitelist), null);
+    assert.strictEqual(DomainMatcher.getMatchedRule('', whitelist), null);
+  });
+});
 
-  // 3. When extension is disabled:
-  assert.strictEqual(
-    DomainMatcher.shouldSwitchTab({
-      enabled: false,
-      autoSwitch: true,
-      whitelist,
-      currentHostname: 'important.org'
-    }),
-    false
-  );
+test('DomainMatcher.shouldSwitchTab decision logic and precedence', async (t) => {
+  const whitelist = [
+    { domain: 'focus-on-site.com', autoFocus: true },
+    { domain: 'focus-off-site.com', autoFocus: false },
+    'legacy-site.org' // defaults to autoFocus: true
+  ];
+
+  await t.test('Matrix 1: Whitelist entry with focus enabled (autoFocus: true)', () => {
+    // When global toggle is OFF:
+    assert.strictEqual(
+      DomainMatcher.shouldSwitchTab({
+        enabled: true,
+        autoSwitch: false,
+        whitelist,
+        currentHostname: 'focus-on-site.com'
+      }),
+      true,
+      'Global OFF + Site Focus ON -> switches focus'
+    );
+
+    // When global toggle is ON:
+    assert.strictEqual(
+      DomainMatcher.shouldSwitchTab({
+        enabled: true,
+        autoSwitch: true,
+        whitelist,
+        currentHostname: 'focus-on-site.com'
+      }),
+      true,
+      'Global ON + Site Focus ON -> switches focus'
+    );
+  });
+
+  await t.test('Matrix 2: Whitelist entry with focus disabled (autoFocus: false) strictly overrides global toggle', () => {
+    // When global toggle is ON: MUST STAY IN BACKGROUND!
+    assert.strictEqual(
+      DomainMatcher.shouldSwitchTab({
+        enabled: true,
+        autoSwitch: true,
+        whitelist,
+        currentHostname: 'focus-off-site.com'
+      }),
+      false,
+      'Global ON + Site Focus OFF -> MUST open in background (whitelist overrides global)'
+    );
+
+    // When global toggle is OFF:
+    assert.strictEqual(
+      DomainMatcher.shouldSwitchTab({
+        enabled: true,
+        autoSwitch: false,
+        whitelist,
+        currentHostname: 'focus-off-site.com'
+      }),
+      false,
+      'Global OFF + Site Focus OFF -> opens in background'
+    );
+
+    // Subdomain check:
+    assert.strictEqual(
+      DomainMatcher.shouldSwitchTab({
+        enabled: true,
+        autoSwitch: true,
+        whitelist,
+        currentHostname: 'sub.focus-off-site.com'
+      }),
+      false,
+      'Subdomain of focus-disabled site must also stay in background even when global is ON'
+    );
+  });
+
+  await t.test('Matrix 3: Non-whitelisted site follows global toggle', () => {
+    // When global toggle is ON:
+    assert.strictEqual(
+      DomainMatcher.shouldSwitchTab({
+        enabled: true,
+        autoSwitch: true,
+        whitelist,
+        currentHostname: 'random-unlisted-blog.com'
+      }),
+      true,
+      'Global ON + Unlisted site -> switches focus'
+    );
+
+    // When global toggle is OFF:
+    assert.strictEqual(
+      DomainMatcher.shouldSwitchTab({
+        enabled: true,
+        autoSwitch: false,
+        whitelist,
+        currentHostname: 'random-unlisted-blog.com'
+      }),
+      false,
+      'Global OFF + Unlisted site -> opens in background'
+    );
+  });
+
+  await t.test('Matrix 4: Legacy string entries behave as autoFocus: true', () => {
+    assert.strictEqual(
+      DomainMatcher.shouldSwitchTab({
+        enabled: true,
+        autoSwitch: false,
+        whitelist,
+        currentHostname: 'legacy-site.org'
+      }),
+      true,
+      'Legacy string entry switches focus when global is OFF'
+    );
+  });
+
+  await t.test('Matrix 5: Extension master disabled', () => {
+    assert.strictEqual(
+      DomainMatcher.shouldSwitchTab({
+        enabled: false,
+        autoSwitch: true,
+        whitelist,
+        currentHostname: 'focus-on-site.com'
+      }),
+      false,
+      'Disabled extension returns false regardless of other settings'
+    );
+  });
 });

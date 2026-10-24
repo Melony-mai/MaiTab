@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const optWhitelistCount = document.getElementById('optWhitelistCount');
   const optAddDomainForm = document.getElementById('optAddDomainForm');
   const optDomainInput = document.getElementById('optDomainInput');
+  const optNewDomainFocus = document.getElementById('optNewDomainFocus');
   const optInputError = document.getElementById('optInputError');
   const optSearchInput = document.getElementById('optSearchInput');
   const optWhitelistTableBody = document.getElementById('optWhitelistTableBody');
@@ -95,7 +96,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     optWhitelistCount.textContent = I18n.t('domainCountBadge', list.length, list.length === 1 ? '' : 's');
 
     const filtered = filter
-      ? list.filter((domain) => domain.toLowerCase().includes(filter))
+      ? list.filter((item) => {
+          const d = typeof item === 'string' ? item : item.domain;
+          return d.toLowerCase().includes(filter);
+        })
       : list;
 
     optWhitelistTableBody.innerHTML = '';
@@ -107,7 +111,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     optEmptyState.classList.add('hidden');
 
-    filtered.forEach((domain) => {
+    filtered.forEach((entry) => {
+      const domain = typeof entry === 'string' ? entry : entry.domain;
+      const autoFocus = typeof entry === 'object' && entry !== null && 'autoFocus' in entry
+        ? Boolean(entry.autoFocus)
+        : true;
+
       const tr = document.createElement('tr');
 
       // Domain Pattern Cell
@@ -121,6 +130,49 @@ document.addEventListener('DOMContentLoaded', async () => {
       const tdScope = document.createElement('td');
       tdScope.className = 'scope-desc';
       tdScope.textContent = I18n.t('scopeDescription', domain);
+
+      // Tab Focus Option Cell
+      const tdFocus = document.createElement('td');
+      const focusWrap = document.createElement('div');
+      focusWrap.className = 'table-focus-control';
+
+      const switchLabel = document.createElement('label');
+      switchLabel.className = 'switch switch-sm';
+
+      const switchInput = document.createElement('input');
+      switchInput.type = 'checkbox';
+      switchInput.checked = autoFocus;
+      switchInput.setAttribute('aria-label', I18n.t('focusToggleAria', domain));
+
+      const slider = document.createElement('span');
+      slider.className = 'slider round';
+
+      switchLabel.appendChild(switchInput);
+      switchLabel.appendChild(slider);
+
+      const statusLabel = document.createElement('span');
+      statusLabel.className = `table-focus-label ${autoFocus ? 'label-focus-on' : 'label-focus-off'}`;
+      statusLabel.textContent = autoFocus
+        ? I18n.t('focusOptionForegroundShort')
+        : I18n.t('focusOptionBackgroundShort');
+
+      switchInput.addEventListener('change', async () => {
+        await StorageManager.updateWhitelistDomainFocus(domain, switchInput.checked);
+        showToast(
+          I18n.t(
+            'toastFocusUpdated',
+            domain,
+            switchInput.checked
+              ? I18n.t('focusOptionForegroundShort')
+              : I18n.t('focusOptionBackgroundShort')
+          )
+        );
+        await loadSettings();
+      });
+
+      focusWrap.appendChild(switchLabel);
+      focusWrap.appendChild(statusLabel);
+      tdFocus.appendChild(focusWrap);
 
       // Action Cell
       const tdAction = document.createElement('td');
@@ -141,6 +193,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       tr.appendChild(tdDomain);
       tr.appendChild(tdScope);
+      tr.appendChild(tdFocus);
       tr.appendChild(tdAction);
 
       optWhitelistTableBody.appendChild(tr);
@@ -171,12 +224,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    const isWhitelisted = DomainMatcher.isDomainWhitelisted(normalized, currentSettings.whitelist);
-    const matchingRule = currentSettings.whitelist.find(rule => DomainMatcher.isDomainMatch(normalized, rule));
+    const matchedRule = DomainMatcher.getMatchedRule(normalized, currentSettings.whitelist);
+    const isWhitelisted = Boolean(matchedRule);
 
     if (isWhitelisted) {
       testerMatchedBadge.className = 'badge badge-success';
-      testerMatchedBadge.textContent = I18n.t('testerMatchedBadge', matchingRule);
+      testerMatchedBadge.textContent = I18n.t('testerMatchedBadge', matchedRule.domain);
     } else {
       testerMatchedBadge.className = 'badge badge-gray';
       testerMatchedBadge.textContent = I18n.t('testerNotMatchedBadge');
@@ -196,15 +249,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else if (willSwitch) {
       testerBehaviorBadge.className = 'badge badge-info';
       testerBehaviorBadge.textContent = I18n.t('testerForegroundBadge');
-      if (currentSettings.autoSwitch) {
-        testerExplanation.textContent = I18n.t('testerExplainGlobalOn', normalized);
+      if (isWhitelisted) {
+        testerExplanation.textContent = I18n.t('testerExplainWhitelistedFocusOn', normalized, matchedRule.domain);
       } else {
-        testerExplanation.textContent = I18n.t('testerExplainWhitelisted', normalized, matchingRule);
+        testerExplanation.textContent = I18n.t('testerExplainGlobalOn', normalized);
       }
     } else {
       testerBehaviorBadge.className = 'badge badge-gray';
       testerBehaviorBadge.textContent = I18n.t('testerBackgroundBadge');
-      testerExplanation.textContent = I18n.t('testerExplainBackground', normalized);
+      if (isWhitelisted) {
+        testerExplanation.textContent = I18n.t('testerExplainWhitelistedFocusOff', normalized, matchedRule.domain);
+      } else {
+        testerExplanation.textContent = I18n.t('testerExplainBackground', normalized);
+      }
     }
   }
 
@@ -254,12 +311,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    if (currentSettings.whitelist.includes(normalized)) {
+    const exists = currentSettings.whitelist.some(entry => {
+      const d = typeof entry === 'string' ? entry : entry.domain;
+      return d === normalized;
+    });
+
+    if (exists) {
       showError(I18n.t('errDomainExists', normalized));
       return;
     }
 
-    const result = await StorageManager.addWhitelistDomain(domain);
+    const autoFocus = optNewDomainFocus ? optNewDomainFocus.value === 'true' : true;
+    const result = await StorageManager.addWhitelistDomain(domain, autoFocus);
     if (!result.success) {
       showError(result.error || I18n.t('errInvalidDomain'));
       return;
@@ -329,7 +392,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         let addedCount = 0;
         for (const item of domainsToAdd) {
-          const res = await StorageManager.addWhitelistDomain(String(item));
+          const domainStr = typeof item === 'object' && item !== null ? item.domain : String(item);
+          const autoFocus = typeof item === 'object' && item !== null && 'autoFocus' in item ? Boolean(item.autoFocus) : true;
+          const res = await StorageManager.addWhitelistDomain(domainStr, autoFocus);
           if (res.success) addedCount++;
         }
 

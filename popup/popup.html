@@ -58,6 +58,16 @@
           + Whitelist
         </button>
       </div>
+      <div id="currentSiteFocusRow" class="current-site-focus-row hidden">
+        <span class="focus-option-label" data-i18n="currentSiteFocusLabel">Tab Focus:</span>
+        <div class="focus-toggle-wrap">
+          <label class="switch switch-xs" data-i18n-title="focusToggleAria">
+            <input type="checkbox" id="currentSiteFocusToggle" checked>
+            <span class="slider round"></span>
+          </label>
+          <span id="currentSiteFocusText" class="current-site-focus-text">Foreground</span>
+        </div>
+      </div>
       <p id="siteBehaviorHint" class="site-behavior-hint"></p>
     </section>
 
@@ -90,7 +100,7 @@
         <a href="../options/options.html" target="_blank" class="link-btn" data-i18n="optionsLink" data-i18n-title="advancedSettings">Options ↗</a>
       </div>
       <p class="section-desc" data-i18n="whitelistDesc">
-        Websites that always switch to the new tab, even when the global switch toggle is off. Subdomains are automatically included.
+        Websites with independent focus preferences that override the global focus toggle. Subdomains are automatically included.
       </p>
 
       <!-- Add Domain Input -->
@@ -105,6 +115,10 @@
             autocomplete="off"
             spellcheck="false"
           >
+          <select id="popupNewDomainFocus" class="select-focus-sm" aria-label="Tab Focus Option">
+            <option value="true" data-i18n="whitelistFocusOn">Focus</option>
+            <option value="false" data-i18n="whitelistFocusOff">Background</option>
+          </select>
           <button type="submit" id="addDomainBtn" class="btn btn-primary" data-i18n="btnAdd" data-i18n-title="btnAdd">
             Add
           </button>

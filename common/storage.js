@@ -15,8 +15,8 @@
 
   const DEFAULT_SETTINGS = {
     enabled: true,             // Master toggle: enable/disable link interception
-    autoSwitch: false,         // Global toggle: automatically switch focus to new tab
-    whitelist: [],             // Whitelisted domains that always switch focus even when autoSwitch is false
+    autoSwitch: false,         // Global focus toggle: automatically switch focus to new tab
+    whitelist: [],             // Whitelisted domains with per-entry focus options: [{ domain: string, autoFocus: boolean }]
     openNextToCurrent: true,   // Place new tab immediately adjacent to current tab
     language: 'auto'           // Language preference: 'auto', 'en', 'zh-CN', 'ja'
   };
@@ -69,13 +69,33 @@
     if (!Array.isArray(normalized.whitelist)) {
       normalized.whitelist = [];
     } else {
-      // Normalize and deduplicate whitelist domains
-      const set = new Set();
+      // Normalize and deduplicate whitelist entries
+      const map = new Map();
       normalized.whitelist.forEach(item => {
-        const norm = DomainMatcher ? DomainMatcher.normalizeDomain(item) : item.trim().toLowerCase();
-        if (norm) set.add(norm);
+        let rawDomain = '';
+        let autoFocus = true;
+
+        if (typeof item === 'string') {
+          rawDomain = item;
+          autoFocus = true;
+        } else if (item && typeof item === 'object') {
+          rawDomain = item.domain || '';
+          autoFocus = item.autoFocus !== false; // defaults to true
+        }
+
+        const norm = DomainMatcher ? DomainMatcher.normalizeDomain(rawDomain) : rawDomain.trim().toLowerCase();
+        if (norm) {
+          if (!map.has(norm)) {
+            map.set(norm, {
+              domain: norm,
+              autoFocus: Boolean(autoFocus)
+            });
+          }
+        }
       });
-      normalized.whitelist = Array.from(set);
+      normalized.whitelist = Array.from(map.values()).sort((a, b) =>
+        a.domain.localeCompare(b.domain)
+      );
     }
 
     normalized.enabled = Boolean(normalized.enabled);
@@ -117,16 +137,34 @@
   }
 
   /**
-   * Adds a domain to the whitelist.
+   * Adds a domain to the whitelist with an optional per-website focus preference.
    * Normalizes the domain and validates it before persisting.
    *
    * @param {string} domainInput - Domain or URL to add
-   * @param {Object} [customStorage]
-   * @returns {Promise<{ success: boolean, domain?: string, whitelist?: string[], error?: string }>}
+   * @param {boolean|Object} [autoFocusOrStorage=true] - Focus preference (default: true) or custom storage adapter
+   * @param {Object} [maybeStorage] - Storage adapter if second param was focus boolean
+   * @returns {Promise<{ success: boolean, domain?: string, autoFocus?: boolean, whitelist?: Array<{domain: string, autoFocus: boolean}>, error?: string }>}
    */
-  async function addWhitelistDomain(domainInput, customStorage) {
+  async function addWhitelistDomain(domainInput, autoFocusOrStorage, maybeStorage) {
     if (!DomainMatcher) {
       return { success: false, error: 'DomainMatcher module is unavailable.' };
+    }
+
+    let autoFocus = true;
+    let customStorage = null;
+
+    if (typeof autoFocusOrStorage === 'boolean') {
+      autoFocus = autoFocusOrStorage;
+      customStorage = maybeStorage;
+    } else if (autoFocusOrStorage && typeof autoFocusOrStorage === 'object') {
+      if (typeof autoFocusOrStorage.get === 'function' || typeof autoFocusOrStorage.set === 'function') {
+        customStorage = autoFocusOrStorage;
+      } else {
+        if ('autoFocus' in autoFocusOrStorage) {
+          autoFocus = Boolean(autoFocusOrStorage.autoFocus);
+        }
+        customStorage = maybeStorage;
+      }
     }
 
     const normalized = DomainMatcher.normalizeDomain(domainInput);
@@ -140,7 +178,12 @@
     const settings = await getSettings(customStorage);
     const existing = settings.whitelist;
 
-    if (existing.includes(normalized)) {
+    const exists = existing.some(entry => {
+      const d = typeof entry === 'string' ? entry : entry.domain;
+      return d === normalized;
+    });
+
+    if (exists) {
       return {
         success: false,
         error: `"${normalized}" is already in your whitelist.`,
@@ -149,12 +192,60 @@
       };
     }
 
-    const updatedWhitelist = [...existing, normalized].sort();
+    const newEntry = {
+      domain: normalized,
+      autoFocus: Boolean(autoFocus)
+    };
+
+    const updatedWhitelist = [...existing, newEntry].sort((a, b) =>
+      a.domain.localeCompare(b.domain)
+    );
     await saveSettings({ whitelist: updatedWhitelist }, customStorage);
 
     return {
       success: true,
       domain: normalized,
+      autoFocus: Boolean(autoFocus),
+      whitelist: updatedWhitelist
+    };
+  }
+
+  /**
+   * Updates the individual focus setting for an existing whitelist entry.
+   *
+   * @param {string} domainInput - Domain to update
+   * @param {boolean} autoFocus - Whether newly opened tabs for this domain receive focus
+   * @param {Object} [customStorage]
+   * @returns {Promise<{ success: boolean, domain?: string, autoFocus?: boolean, whitelist?: Array<{domain: string, autoFocus: boolean}>, error?: string }>}
+   */
+  async function updateWhitelistDomainFocus(domainInput, autoFocus, customStorage) {
+    const normalized = DomainMatcher ? DomainMatcher.normalizeDomain(domainInput) : domainInput.trim().toLowerCase();
+    const settings = await getSettings(customStorage);
+
+    const index = settings.whitelist.findIndex(entry => {
+      const d = typeof entry === 'string' ? entry : entry.domain;
+      return d === normalized;
+    });
+
+    if (index === -1) {
+      return {
+        success: false,
+        error: `"${normalized}" is not in your whitelist.`
+      };
+    }
+
+    const updatedWhitelist = [...settings.whitelist];
+    updatedWhitelist[index] = {
+      domain: normalized,
+      autoFocus: Boolean(autoFocus)
+    };
+
+    await saveSettings({ whitelist: updatedWhitelist }, customStorage);
+
+    return {
+      success: true,
+      domain: normalized,
+      autoFocus: Boolean(autoFocus),
       whitelist: updatedWhitelist
     };
   }
@@ -164,13 +255,16 @@
    *
    * @param {string} domainInput - Domain to remove
    * @param {Object} [customStorage]
-   * @returns {Promise<{ success: boolean, whitelist: string[] }>}
+   * @returns {Promise<{ success: boolean, whitelist: Array<{domain: string, autoFocus: boolean}> }>}
    */
   async function removeWhitelistDomain(domainInput, customStorage) {
     const normalized = DomainMatcher ? DomainMatcher.normalizeDomain(domainInput) : domainInput.trim().toLowerCase();
     const settings = await getSettings(customStorage);
 
-    const updatedWhitelist = settings.whitelist.filter(d => d !== normalized);
+    const updatedWhitelist = settings.whitelist.filter(entry => {
+      const d = typeof entry === 'string' ? entry : entry.domain;
+      return d !== normalized;
+    });
     await saveSettings({ whitelist: updatedWhitelist }, customStorage);
 
     return {
@@ -215,6 +309,7 @@
     getSettings,
     saveSettings,
     addWhitelistDomain,
+    updateWhitelistDomainFocus,
     removeWhitelistDomain,
     clearWhitelist,
     resetToDefaults,

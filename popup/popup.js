@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const siteStatusBadge = document.getElementById('siteStatusBadge');
   const currentDomainText = document.getElementById('currentDomainText');
   const quickWhitelistBtn = document.getElementById('quickWhitelistBtn');
+  const currentSiteFocusRow = document.getElementById('currentSiteFocusRow');
+  const currentSiteFocusToggle = document.getElementById('currentSiteFocusToggle');
+  const currentSiteFocusText = document.getElementById('currentSiteFocusText');
   const siteBehaviorHint = document.getElementById('siteBehaviorHint');
   const autoSwitchToggle = document.getElementById('autoSwitchToggle');
   const autoSwitchDescription = document.getElementById('autoSwitchDescription');
@@ -19,6 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const whitelistCount = document.getElementById('whitelistCount');
   const addDomainForm = document.getElementById('addDomainForm');
   const domainInput = document.getElementById('domainInput');
+  const popupNewDomainFocus = document.getElementById('popupNewDomainFocus');
   const inputError = document.getElementById('inputError');
   const whitelistUl = document.getElementById('whitelistUl');
   const emptyWhitelist = document.getElementById('emptyWhitelist');
@@ -98,35 +102,50 @@ document.addEventListener('DOMContentLoaded', async () => {
       siteStatusBadge.textContent = I18n.t('badgeInactive');
       quickWhitelistBtn.disabled = true;
       quickWhitelistBtn.textContent = I18n.t('btnWhitelist');
+      currentSiteFocusRow.classList.add('hidden');
       siteBehaviorHint.textContent = I18n.t('hintInternal');
     } else {
       currentDomainText.textContent = activeTabHostname;
       quickWhitelistBtn.disabled = false;
 
-      const isWhitelisted = DomainMatcher.isDomainWhitelisted(activeTabHostname, currentSettings.whitelist);
+      const matchedRule = DomainMatcher.getMatchedRule(activeTabHostname, currentSettings.whitelist);
+      const isWhitelisted = Boolean(matchedRule);
 
       if (isWhitelisted) {
         quickWhitelistBtn.textContent = I18n.t('btnWhitelisted');
         quickWhitelistBtn.className = 'btn btn-sm btn-secondary';
         quickWhitelistBtn.title = I18n.t('titleRemoveCurrent');
+
+        currentSiteFocusRow.classList.remove('hidden');
+        currentSiteFocusToggle.checked = matchedRule.autoFocus;
+        currentSiteFocusText.textContent = matchedRule.autoFocus
+          ? I18n.t('focusOptionForegroundShort')
+          : I18n.t('focusOptionBackgroundShort');
       } else {
         quickWhitelistBtn.textContent = I18n.t('btnWhitelist');
         quickWhitelistBtn.className = 'btn btn-sm btn-primary';
         quickWhitelistBtn.title = I18n.t('titleWhitelistCurrent');
+        currentSiteFocusRow.classList.add('hidden');
       }
 
       if (!currentSettings.enabled) {
         siteStatusBadge.className = 'badge badge-gray';
         siteStatusBadge.textContent = I18n.t('badgePaused');
         siteBehaviorHint.textContent = I18n.t('hintPaused');
+      } else if (isWhitelisted) {
+        if (matchedRule.autoFocus) {
+          siteStatusBadge.className = 'badge badge-success';
+          siteStatusBadge.textContent = I18n.t('badgeForegroundWhitelisted');
+          siteBehaviorHint.textContent = I18n.t('hintForegroundWhitelisted');
+        } else {
+          siteStatusBadge.className = 'badge badge-warning';
+          siteStatusBadge.textContent = I18n.t('badgeBackgroundWhitelisted');
+          siteBehaviorHint.textContent = I18n.t('hintBackgroundWhitelisted');
+        }
       } else if (currentSettings.autoSwitch) {
         siteStatusBadge.className = 'badge badge-info';
         siteStatusBadge.textContent = I18n.t('badgeForeground');
         siteBehaviorHint.textContent = I18n.t('hintForegroundGlobal');
-      } else if (isWhitelisted) {
-        siteStatusBadge.className = 'badge badge-success';
-        siteStatusBadge.textContent = I18n.t('badgeForegroundWhitelisted');
-        siteBehaviorHint.textContent = I18n.t('hintForegroundWhitelisted');
       } else {
         siteStatusBadge.className = 'badge badge-gray';
         siteStatusBadge.textContent = I18n.t('badgeBackground');
@@ -139,7 +158,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   /**
-   * Renders the list of whitelisted domains.
+   * Renders the list of whitelisted domains with per-entry focus options.
    */
   function renderWhitelistItems(whitelist) {
     whitelistUl.innerHTML = '';
@@ -154,7 +173,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     emptyWhitelist.classList.add('hidden');
     whitelistUl.classList.remove('hidden');
 
-    whitelist.forEach((domain) => {
+    whitelist.forEach((entry) => {
+      const domain = typeof entry === 'string' ? entry : entry.domain;
+      const autoFocus = typeof entry === 'object' && entry !== null && 'autoFocus' in entry
+        ? Boolean(entry.autoFocus)
+        : true;
+
       const li = document.createElement('li');
       li.className = 'whitelist-item';
 
@@ -173,6 +197,44 @@ document.addEventListener('DOMContentLoaded', async () => {
       wrap.appendChild(domainSpan);
       wrap.appendChild(tagSpan);
 
+      // Actions container: Focus toggle + Remove button
+      const actionsDiv = document.createElement('div');
+      actionsDiv.className = 'item-controls';
+
+      // Focus Toggle
+      const focusToggleLabel = document.createElement('label');
+      focusToggleLabel.className = 'item-focus-toggle-wrap';
+      focusToggleLabel.title = I18n.t('focusToggleAria', domain);
+
+      const focusBadge = document.createElement('span');
+      focusBadge.className = `item-focus-badge ${autoFocus ? 'focus-on' : 'focus-off'}`;
+      focusBadge.textContent = autoFocus ? I18n.t('whitelistFocusOn') : I18n.t('whitelistFocusOff');
+
+      const switchLabel = document.createElement('label');
+      switchLabel.className = 'switch switch-xs';
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'whitelist-item-focus-checkbox';
+      checkbox.checked = autoFocus;
+      checkbox.setAttribute('aria-label', I18n.t('focusToggleAria', domain));
+
+      checkbox.addEventListener('change', async (e) => {
+        e.stopPropagation();
+        await StorageManager.updateWhitelistDomainFocus(domain, checkbox.checked);
+        await renderUI();
+      });
+
+      const slider = document.createElement('span');
+      slider.className = 'slider round';
+
+      switchLabel.appendChild(checkbox);
+      switchLabel.appendChild(slider);
+
+      focusToggleLabel.appendChild(focusBadge);
+      focusToggleLabel.appendChild(switchLabel);
+
+      // Remove button
       const removeBtn = document.createElement('button');
       removeBtn.className = 'btn-remove';
       removeBtn.innerHTML = '&times;';
@@ -184,8 +246,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         await renderUI();
       });
 
+      actionsDiv.appendChild(focusToggleLabel);
+      actionsDiv.appendChild(removeBtn);
+
       li.appendChild(wrap);
-      li.appendChild(removeBtn);
+      li.appendChild(actionsDiv);
       whitelistUl.appendChild(li);
     });
   }
@@ -223,18 +288,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     await renderUI();
   });
 
+  // Current Site Focus Toggle
+  currentSiteFocusToggle.addEventListener('change', async () => {
+    if (!activeTabHostname) return;
+    const rule = DomainMatcher.getMatchedRule(activeTabHostname, currentSettings.whitelist);
+    if (rule) {
+      await StorageManager.updateWhitelistDomainFocus(rule.domain, currentSiteFocusToggle.checked);
+      await renderUI();
+    }
+  });
+
   // Quick Whitelist button for active tab
   quickWhitelistBtn.addEventListener('click', async () => {
     if (!activeTabHostname) return;
 
-    const isWhitelisted = DomainMatcher.isDomainWhitelisted(activeTabHostname, currentSettings.whitelist);
-    if (isWhitelisted) {
-      const ruleToRemove = currentSettings.whitelist.find(rule =>
-        DomainMatcher.isDomainMatch(activeTabHostname, rule)
-      ) || activeTabHostname;
-      await StorageManager.removeWhitelistDomain(ruleToRemove);
+    const matchedRule = DomainMatcher.getMatchedRule(activeTabHostname, currentSettings.whitelist);
+    if (matchedRule) {
+      await StorageManager.removeWhitelistDomain(matchedRule.domain);
     } else {
-      await StorageManager.addWhitelistDomain(activeTabHostname);
+      await StorageManager.addWhitelistDomain(activeTabHostname, true);
     }
     await renderUI();
   });
@@ -256,12 +328,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    if (currentSettings.whitelist.includes(normalized)) {
+    const exists = currentSettings.whitelist.some(entry => {
+      const d = typeof entry === 'string' ? entry : entry.domain;
+      return d === normalized;
+    });
+
+    if (exists) {
       showError(I18n.t('errDomainExists', normalized));
       return;
     }
 
-    const result = await StorageManager.addWhitelistDomain(rawInput);
+    const autoFocus = popupNewDomainFocus ? popupNewDomainFocus.value === 'true' : true;
+    const result = await StorageManager.addWhitelistDomain(rawInput, autoFocus);
     if (!result.success) {
       showError(result.error || I18n.t('errInvalidDomain'));
       return;

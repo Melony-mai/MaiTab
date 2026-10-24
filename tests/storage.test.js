@@ -48,13 +48,61 @@ test('StorageManager', async (t) => {
     const res1 = await StorageManager.addWhitelistDomain('https://github.com/trending', mock);
     assert.strictEqual(res1.success, true);
     assert.strictEqual(res1.domain, 'github.com');
-    assert.deepStrictEqual(res1.whitelist, ['github.com']);
+    assert.strictEqual(res1.autoFocus, true);
+    assert.deepStrictEqual(res1.whitelist, [{ domain: 'github.com', autoFocus: true }]);
 
     const res2 = await StorageManager.addWhitelistDomain('*.archlinux.org', mock);
     assert.strictEqual(res2.success, true);
     assert.strictEqual(res2.domain, 'archlinux.org');
+    assert.strictEqual(res2.autoFocus, true);
     // alphabetical sort
-    assert.deepStrictEqual(res2.whitelist, ['archlinux.org', 'github.com']);
+    assert.deepStrictEqual(res2.whitelist, [
+      { domain: 'archlinux.org', autoFocus: true },
+      { domain: 'github.com', autoFocus: true }
+    ]);
+  });
+
+  await t.test('adds domain with custom per-website focus option (autoFocus: false)', async () => {
+    const mock = createMockStorage();
+    const res = await StorageManager.addWhitelistDomain('reddit.com', false, mock);
+    assert.strictEqual(res.success, true);
+    assert.strictEqual(res.domain, 'reddit.com');
+    assert.strictEqual(res.autoFocus, false);
+    assert.deepStrictEqual(res.whitelist, [{ domain: 'reddit.com', autoFocus: false }]);
+
+    const retrieved = await StorageManager.getSettings(mock);
+    assert.deepStrictEqual(retrieved.whitelist, [{ domain: 'reddit.com', autoFocus: false }]);
+  });
+
+  await t.test('updates focus preference of an existing whitelist entry', async () => {
+    const mock = createMockStorage();
+    await StorageManager.addWhitelistDomain('example.com', true, mock);
+
+    // Toggle focus to false (background)
+    const updateRes = await StorageManager.updateWhitelistDomainFocus('example.com', false, mock);
+    assert.strictEqual(updateRes.success, true);
+    assert.strictEqual(updateRes.autoFocus, false);
+    assert.deepStrictEqual(updateRes.whitelist, [{ domain: 'example.com', autoFocus: false }]);
+
+    let settings = await StorageManager.getSettings(mock);
+    assert.strictEqual(settings.whitelist[0].autoFocus, false);
+
+    // Toggle focus back to true
+    await StorageManager.updateWhitelistDomainFocus('example.com', true, mock);
+    settings = await StorageManager.getSettings(mock);
+    assert.strictEqual(settings.whitelist[0].autoFocus, true);
+  });
+
+  await t.test('normalizes legacy string array into object array with default autoFocus: true', async () => {
+    const mock = createMockStorage({
+      whitelist: ['legacy1.com', 'legacy2.org']
+    });
+
+    const settings = await StorageManager.getSettings(mock);
+    assert.deepStrictEqual(settings.whitelist, [
+      { domain: 'legacy1.com', autoFocus: true },
+      { domain: 'legacy2.org', autoFocus: true }
+    ]);
   });
 
   await t.test('rejects duplicate domains', async () => {
@@ -75,11 +123,11 @@ test('StorageManager', async (t) => {
   await t.test('removes domain from whitelist', async () => {
     const mock = createMockStorage();
     await StorageManager.addWhitelistDomain('a.com', mock);
-    await StorageManager.addWhitelistDomain('b.com', mock);
+    await StorageManager.addWhitelistDomain('b.com', false, mock);
 
     const res = await StorageManager.removeWhitelistDomain('a.com', mock);
     assert.strictEqual(res.success, true);
-    assert.deepStrictEqual(res.whitelist, ['b.com']);
+    assert.deepStrictEqual(res.whitelist, [{ domain: 'b.com', autoFocus: false }]);
   });
 
   await t.test('clears whitelist and resets to defaults', async () => {

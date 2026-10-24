@@ -74,6 +74,7 @@ async function handleMessage(request, sender) {
       const settings = await StorageManager.getSettings();
       const currentHost = request.currentHost || (sender.tab?.url ? new URL(sender.tab.url).hostname : '');
       const isWhitelisted = DomainMatcher.isDomainWhitelisted(currentHost, settings.whitelist);
+      const matchedRule = DomainMatcher.getMatchedRule(currentHost, settings.whitelist);
       const willSwitch = DomainMatcher.shouldSwitchTab({
         enabled: settings.enabled,
         autoSwitch: settings.autoSwitch,
@@ -87,6 +88,7 @@ async function handleMessage(request, sender) {
         autoSwitch: settings.autoSwitch,
         currentHost,
         isWhitelisted,
+        matchedRule,
         willSwitch
       };
     }

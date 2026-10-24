@@ -194,5 +194,37 @@ test('End-to-End Decision Flow Simulation', async (t) => {
       currentHostname: 'news.ycombinator.com'
     });
     assert.strictEqual(hnSwitchWhenGlobalOn, true, 'When autoSwitch is ON, whitelisted sites also switch to foreground');
+
+    // 5. Add a website with focus explicitly disabled (autoFocus: false), e.g. 'reddit.com'
+    settings.whitelist.push({ domain: 'reddit.com', autoFocus: false });
+
+    // When global toggle is ON, reddit.com links MUST open in background!
+    const redditSwitchGlobalOn = DomainMatcher.shouldSwitchTab({
+      enabled: settings.enabled,
+      autoSwitch: settings.autoSwitch, // true
+      whitelist: settings.whitelist,
+      currentHostname: 'reddit.com'
+    });
+    assert.strictEqual(redditSwitchGlobalOn, false, 'Focus-disabled whitelist entry must open in background even when global toggle is ON');
+
+    const subRedditSwitchGlobalOn = DomainMatcher.shouldSwitchTab({
+      enabled: settings.enabled,
+      autoSwitch: settings.autoSwitch, // true
+      whitelist: settings.whitelist,
+      currentHostname: 'old.reddit.com'
+    });
+    assert.strictEqual(subRedditSwitchGlobalOn, false, 'Subdomain of focus-disabled whitelist entry must also open in background');
+
+    // 6. User changes reddit.com's focus preference to true
+    const redditRule = settings.whitelist.find(r => (typeof r === 'object' ? r.domain : r) === 'reddit.com');
+    redditRule.autoFocus = true;
+
+    const redditSwitchUpdated = DomainMatcher.shouldSwitchTab({
+      enabled: settings.enabled,
+      autoSwitch: false, // global OFF
+      whitelist: settings.whitelist,
+      currentHostname: 'reddit.com'
+    });
+    assert.strictEqual(redditSwitchUpdated, true, 'Updated whitelist entry focus to true immediately switches focus even when global is OFF');
   });
 });
