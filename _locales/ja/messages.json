@@ -1,0 +1,14 @@
+{
+  "extName": {
+    "message": "MaiTab - リンクを新しいタブで開く",
+    "description": "Extension name"
+  },
+  "extDesc": {
+    "message": "左クリックしたリンクを現在の閲覧を妨げずに新しいタブで開き、自動タブ切り替えとドメインホワイトリスト機能を提供します。",
+    "description": "Extension description"
+  },
+  "defaultTitle": {
+    "message": "MaiTab",
+    "description": "Action icon tooltip"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "extName": {
+    "message": "MaiTab - 在新标签页打开链接",
+    "description": "Extension name"
+  },
+  "extDesc": {
+    "message": "左键点击链接时在新标签页打开，不打断当前浏览会话；支持自动切换开关与网站白名单覆盖。",
+    "description": "Extension description"
+  },
+  "defaultTitle": {
+    "message": "MaiTab",
+    "description": "Action icon tooltip"
+  }
+}

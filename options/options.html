@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MaiTab Settings & Options</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="page-container">
+    <!-- Header -->
+    <header class="page-header">
+      <div class="brand">
+        <img src="../icons/icon48.png" alt="MaiTab" class="brand-icon">
+        <div>
+          <h1 class="brand-title" data-i18n="optTitle">MaiTab Settings</h1>
+          <p class="brand-subtitle" data-i18n="optSubtitle">Configure link opening and tab switching behaviors</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="lang-selector-wrap">
+          <select id="optLangSelect" class="lang-select" aria-label="Language">
+            <option value="en">English</option>
+            <option value="zh-CN">简体中文</option>
+            <option value="ja">日本語</option>
+          </select>
+        </div>
+        <button id="resetDefaultsBtn" class="btn btn-secondary" data-i18n="resetToDefaults">Reset to Defaults</button>
+      </div>
+    </header>
+
+    <!-- Main Grid -->
+    <main class="settings-grid">
+      <!-- Section 1: General Preferences -->
+      <section class="card">
+        <h2 class="card-title" data-i18n="generalPreferences">General Preferences</h2>
+
+        <!-- Master Switch -->
+        <div class="option-row">
+          <div class="option-info">
+            <label for="optMasterEnabled" class="option-label" data-i18n="optEnableLabel">Enable MaiTab</label>
+            <p class="option-desc" data-i18n="optEnableDesc">When enabled, left-clicking webpage links will open them in new tabs instead of navigating the current tab.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="optMasterEnabled" checked>
+            <span class="slider round"></span>
+          </label>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Global Tab Switching Toggle -->
+        <div class="option-row">
+          <div class="option-info">
+            <label for="optAutoSwitch" class="option-label" data-i18n="optGlobalSwitchLabel">Global Tab Switching</label>
+            <p class="option-desc" data-i18n="optGlobalSwitchDesc">
+              Controls whether Chrome automatically focuses newly opened tabs.
+            </p>
+            <ul class="option-bullets">
+              <li data-i18n="optBulletOn" data-i18n-html="true"><strong>Enabled:</strong> Clicking any link opens in a new tab and immediately switches focus to it.</li>
+              <li data-i18n="optBulletOff" data-i18n-html="true"><strong>Disabled (Default):</strong> Links open in background tabs so you can continue reading without interruption (unless whitelisted).</li>
+            </ul>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="optAutoSwitch">
+            <span class="slider round"></span>
+          </label>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Position next to current tab -->
+        <div class="option-row">
+          <div class="option-info">
+            <label for="optOpenNext" class="option-label" data-i18n="optOpenNextLabel">Open Next to Current Tab</label>
+            <p class="option-desc" data-i18n="optOpenNextDesc">Position newly opened tabs immediately to the right of your current tab, mimicking Chrome's native middle-click behavior.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="optOpenNext" checked>
+            <span class="slider round"></span>
+          </label>
+        </div>
+      </section>
+
+      <!-- Section 2: Website Whitelist Management -->
+      <section class="card">
+        <div class="card-header-row">
+          <div>
+            <h2 class="card-title" data-i18n="optWhitelistHeading">Website Switching Whitelist</h2>
+            <p class="card-subtitle" data-i18n="optWhitelistSubheading" data-i18n-html="true">
+              Websites listed here will <strong>always switch focus</strong> to the new tab, even when Global Tab Switching is turned off. Subdomains are automatically included.
+            </p>
+          </div>
+          <div class="badge-counter" id="optWhitelistCount">0 domains</div>
+        </div>
+
+        <!-- Add Input Form -->
+        <form id="optAddDomainForm" class="add-domain-row">
+          <input
+            type="text"
+            id="optDomainInput"
+            class="input-text"
+            data-i18n-placeholder="inputPlaceholderDomain"
+            placeholder="e.g. github.com, news.ycombinator.com, or *.reddit.com"
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <button type="submit" class="btn btn-primary" data-i18n="btnAddWebsite">Add Website</button>
+        </form>
+        <div id="optInputError" class="input-error hidden"></div>
+
+        <!-- Filter & Whitelist Table -->
+        <div class="table-controls">
+          <input
+            type="text"
+            id="optSearchInput"
+            class="input-text input-search"
+            data-i18n-placeholder="filterPlaceholder"
+            placeholder="Filter whitelist domains..."
+          >
+          <div class="bulk-actions">
+            <button id="exportWhitelistBtn" class="btn btn-sm btn-secondary" data-i18n="btnExport" title="Export whitelist to JSON">Export</button>
+            <button id="importWhitelistBtn" class="btn btn-sm btn-secondary" data-i18n="btnImport" title="Import whitelist">Import</button>
+            <button id="clearWhitelistBtn" class="btn btn-sm btn-danger-outline" data-i18n="btnClearAll" title="Clear all whitelisted domains">Clear All</button>
+          </div>
+        </div>
+
+        <div class="whitelist-table-wrap">
+          <table class="whitelist-table">
+            <thead>
+              <tr>
+                <th data-i18n="thDomainPattern">Domain Pattern</th>
+                <th data-i18n="thMatchingScope">Matching Scope</th>
+                <th data-i18n="thAction" style="width: 80px; text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="optWhitelistTableBody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+          <div id="optEmptyState" class="empty-state hidden">
+            <p data-i18n="optEmptyStateTitle">No whitelisted websites found.</p>
+            <span data-i18n="optEmptyStateDesc">Add domains above to force automatic tab switching for them.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 3: Interactive Domain Matching Tester -->
+      <section class="card">
+        <h2 class="card-title" data-i18n="testerTitle">Interactive Domain Match Tester</h2>
+        <p class="card-subtitle" data-i18n="testerSubtitle">
+          Test any URL or domain against your current whitelist and settings to verify whether links will open in the foreground or background.
+        </p>
+
+        <div class="tester-input-wrap">
+          <input
+            type="text"
+            id="testerInput"
+            class="input-text"
+            data-i18n-placeholder="testerPlaceholder"
+            placeholder="Type a URL or domain to test, e.g. https://gist.github.com/my-gist"
+          >
+        </div>
+
+        <div id="testerResult" class="tester-result hidden">
+          <div class="tester-result-row">
+            <span class="tester-label" data-i18n="testerNormalizedHost">Normalized Hostname:</span>
+            <code id="testerNormalizedHost" class="tester-code">-</code>
+          </div>
+          <div class="tester-result-row">
+            <span class="tester-label" data-i18n="testerWhitelistMatch">Whitelist Match:</span>
+            <span id="testerMatchedBadge" class="badge badge-gray">-</span>
+          </div>
+          <div class="tester-result-row">
+            <span class="tester-label" data-i18n="testerResultingBehavior">Resulting Tab Behavior:</span>
+            <span id="testerBehaviorBadge" class="badge badge-gray">-</span>
+          </div>
+          <p id="testerExplanation" class="tester-explanation"></p>
+        </div>
+      </section>
+
+      <!-- Section 4: Technical Matching Rules & Documentation -->
+      <section class="card info-card">
+        <h2 class="card-title" data-i18n="docHeading">How Domain Matching & Interception Works</h2>
+        <div class="doc-content">
+          <h3 data-i18n="docDomainRulesTitle">Domain Matching Rules:</h3>
+          <ul>
+            <li data-i18n="docRuleExact" data-i18n-html="true"><strong>Exact Match:</strong> <code>example.com</code> matches visits on <code>example.com</code>.</li>
+            <li data-i18n="docRuleSubdomains" data-i18n-html="true"><strong>Subdomain Matching:</strong> <code>example.com</code> also automatically matches <code>news.example.com</code>, <code>blog.example.com</code>, and any deep subdomains.</li>
+            <li data-i18n="docRuleSafety" data-i18n-html="true"><strong>Protection Against False Positives:</strong> <code>example.com</code> will <em>never</em> match <code>fakeexample.com</code> or <code>example.com.phishing.org</code>.</li>
+          </ul>
+
+          <h3 data-i18n="docLinkSafetyTitle">Link Click Safety:</h3>
+          <ul>
+            <li data-i18n="docSafetyModifiers" data-i18n-html="true"><strong>Modifier Keys:</strong> Standard browser shortcuts (Ctrl+Click, Shift+Click, Alt+Click, Cmd+Click) are preserved without interference.</li>
+            <li data-i18n="docSafetyClicks" data-i18n-html="true"><strong>Right & Middle Clicks:</strong> Only standard left-clicks are handled. Context menus and middle-clicks are left to the browser.</li>
+            <li data-i18n="docSafetyHash" data-i18n-html="true"><strong>In-page Anchors:</strong> Same-page fragment links (e.g. <code>#comments</code>, <code>#section2</code>) scroll smoothly and do not open blank tabs.</li>
+            <li data-i18n="docSafetyControls" data-i18n-html="true"><strong>Interactive Elements:</strong> Buttons, dropdown menus, text inputs, text selections, and <code>download</code> links continue functioning normally.</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <!-- Hidden file input for import -->
+    <input type="file" id="importFileInput" accept=".json,.txt" class="hidden">
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden"></div>
+  </div>
+
+  <script src="../common/i18n.js"></script>
+  <script src="../common/domain-matcher.js"></script>
+  <script src="../common/storage.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

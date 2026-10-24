@@ -1,0 +1,592 @@
+/**
+ * MaiTab - Centralized Multilingual Localization Module
+ * Supports English (en), Chinese Simplified (zh-CN), and Japanese (ja).
+ * Provides dynamic runtime language switching without requiring page reload.
+ */
+
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) {
+    module.exports = factory();
+  } else {
+    root.I18n = factory();
+  }
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  'use strict';
+
+  const SUPPORTED_LANGUAGES = ['en', 'zh-CN', 'ja'];
+  const DEFAULT_LANGUAGE = 'en';
+
+  const TRANSLATIONS = {
+    en: {
+      // General & Brand
+      extName: 'MaiTab - Open Links in New Tabs',
+      extDesc: 'Opens links in new tabs on left-click without interrupting your session, with automatic switching toggle and domain whitelist overrides.',
+      defaultTitle: 'MaiTab',
+      brandVersion: 'v1.0',
+      masterToggleTitle: 'Enable or disable MaiTab link interception',
+      language: 'Language',
+      optionsLink: 'Options ↗',
+      advancedSettings: 'Advanced Settings',
+      footerHint: 'Left-click links open in new tabs',
+      resetToDefaults: 'Reset to Defaults',
+
+      // Disabled State
+      disabledBanner: 'Extension is currently paused. Links will behave normally.',
+
+      // Current Site Card
+      currentWebsite: 'Current Website',
+      internalPage: 'Internal / Special Page',
+      badgeChecking: 'Checking...',
+      badgeInactive: 'Inactive',
+      badgePaused: 'Paused',
+      badgeForeground: 'Foreground',
+      badgeForegroundWhitelisted: 'Foreground (Whitelisted)',
+      badgeBackground: 'Background',
+      btnWhitelist: '+ Whitelist',
+      btnWhitelisted: '✓ Whitelisted',
+      titleWhitelistCurrent: 'Click to force foreground tabs for this website',
+      titleRemoveCurrent: 'Click to remove this site from whitelist',
+      hintInternal: 'MaiTab does not run on browser internal or extension pages.',
+      hintPaused: 'Extension is disabled. Normal browser navigation occurs.',
+      hintForegroundGlobal: 'Will switch to new tab (Global switch toggle is ON).',
+      hintForegroundWhitelisted: 'Will switch to new tab because this website is in your whitelist.',
+      hintBackground: 'Will open in background tab, preserving your current page.',
+
+      // Global Tab Switching Toggle
+      autoSwitchTitle: 'Switch to New Tab Automatically',
+      autoSwitchDescOn: 'Links on ALL websites switch to the newly opened tab immediately.',
+      autoSwitchDescOff: 'Links open in background tabs, preserving your reading session without interruption.',
+      calloutGlobalOn: '<strong>Global Switch ON:</strong> Left-clicking a link opens a new tab and focuses it immediately.',
+      calloutGlobalOff: '<strong>Global Switch OFF:</strong> Links open in background tabs (whitelisted websites switch to foreground).',
+
+      // Whitelist Section
+      whitelistTitle: 'Automatic Switching Whitelist',
+      whitelistDesc: 'Websites that always switch to the new tab, even when the global switch toggle is off. Subdomains are automatically included.',
+      inputPlaceholderDomain: 'e.g. github.com or news.ycombinator.com',
+      btnAdd: 'Add',
+      btnAddWebsite: 'Add Website',
+      subdomainsTag: '+subdomains',
+      emptyWhitelistTitle: 'No whitelisted domains yet.',
+      emptyWhitelistDesc: 'Add domains above to force automatic tab switching for them.',
+      removeAria: 'Remove {0} from whitelist',
+      filterPlaceholder: 'Filter whitelist domains...',
+
+      // Options Page - General Preferences
+      optTitle: 'MaiTab Settings',
+      optSubtitle: 'Configure link opening and tab switching behaviors',
+      generalPreferences: 'General Preferences',
+      optEnableLabel: 'Enable MaiTab',
+      optEnableDesc: 'When enabled, left-clicking webpage links will open them in new tabs instead of navigating the current tab.',
+      optGlobalSwitchLabel: 'Global Tab Switching',
+      optGlobalSwitchDesc: 'Controls whether Chrome automatically focuses newly opened tabs.',
+      optBulletOn: '<strong>Enabled:</strong> Clicking any link opens in a new tab and immediately switches focus to it.',
+      optBulletOff: '<strong>Disabled (Default):</strong> Links open in background tabs so you can continue reading without interruption (unless whitelisted).',
+      optOpenNextLabel: 'Open Next to Current Tab',
+      optOpenNextDesc: "Position newly opened tabs immediately to the right of your current tab, mimicking Chrome's native middle-click behavior.",
+
+      // Options Page - Whitelist Management
+      optWhitelistHeading: 'Website Switching Whitelist',
+      optWhitelistSubheading: 'Websites listed here will <strong>always switch focus</strong> to the new tab, even when Global Tab Switching is turned off. Subdomains are automatically included.',
+      domainCountBadge: '{0} domain{1}',
+      btnExport: 'Export',
+      btnImport: 'Import',
+      btnClearAll: 'Clear All',
+      thDomainPattern: 'Domain Pattern',
+      thMatchingScope: 'Matching Scope',
+      thAction: 'Action',
+      scopeDescription: 'Matches {0} and *.{0}',
+      optEmptyStateTitle: 'No whitelisted websites found.',
+      optEmptyStateDesc: 'Add domains above to force automatic tab switching for them.',
+
+      // Interactive Tester
+      testerTitle: 'Interactive Domain Match Tester',
+      testerSubtitle: 'Test any URL or domain against your current whitelist and settings to verify whether links will open in the foreground or background.',
+      testerPlaceholder: 'Type a URL or domain to test, e.g. https://gist.github.com/my-gist',
+      testerNormalizedHost: 'Normalized Hostname:',
+      testerWhitelistMatch: 'Whitelist Match:',
+      testerResultingBehavior: 'Resulting Tab Behavior:',
+      testerInvalidInput: 'Invalid Input',
+      testerEnterValidPrompt: 'Please enter a valid URL or hostname to test.',
+      testerMatchedBadge: 'Whitelisted (Matched: {0})',
+      testerNotMatchedBadge: 'Not Whitelisted',
+      testerForegroundBadge: 'Foreground Tab (Active)',
+      testerBackgroundBadge: 'Background Tab',
+      testerPausedBadge: 'Extension Paused',
+      testerExplainPaused: 'The extension is currently turned off. Standard browser link navigation will occur.',
+      testerExplainGlobalOn: 'Links from "{0}" will open and immediately focus the new tab because Global Tab Switching is ON.',
+      testerExplainWhitelisted: 'Links from "{0}" will open and focus the new tab because it matches whitelist rule "{1}", overriding the global switch off setting.',
+      testerExplainBackground: 'Links from "{0}" will open in a new background tab without interrupting your current reading session (Global switch is OFF and site is not whitelisted).',
+
+      // Technical Documentation Section
+      docHeading: 'How Domain Matching & Interception Works',
+      docDomainRulesTitle: 'Domain Matching Rules:',
+      docRuleExact: '<strong>Exact Match:</strong> <code>example.com</code> matches visits on <code>example.com</code>.',
+      docRuleSubdomains: '<strong>Subdomain Matching:</strong> <code>example.com</code> also automatically matches <code>news.example.com</code>, <code>blog.example.com</code>, and any deep subdomains.',
+      docRuleSafety: '<strong>Protection Against False Positives:</strong> <code>example.com</code> will <em>never</em> match <code>fakeexample.com</code> or <code>example.com.phishing.org</code>.',
+      docLinkSafetyTitle: 'Link Click Safety:',
+      docSafetyModifiers: '<strong>Modifier Keys:</strong> Standard browser shortcuts (Ctrl+Click, Shift+Click, Alt+Click, Cmd+Click) are preserved without interference.',
+      docSafetyClicks: '<strong>Right & Middle Clicks:</strong> Only standard left-clicks are handled. Context menus and middle-clicks are left to the browser.',
+      docSafetyHash: '<strong>In-page Anchors:</strong> Same-page fragment links (e.g. <code>#comments</code>, <code>#section2</code>) scroll smoothly and do not open blank tabs.',
+      docSafetyControls: '<strong>Interactive Elements:</strong> Buttons, dropdown menus, text inputs, text selections, and <code>download</code> links continue functioning normally.',
+
+      // Errors & Validation
+      errEnterDomain: 'Please enter a domain or URL.',
+      errInvalidDomain: 'Invalid domain format. Enter a valid domain such as "example.com" or "sub.domain.org".',
+      errDomainExists: '"{0}" is already in your whitelist.',
+      errFileParse: 'Failed to parse import file: {0}',
+
+      // Toasts & Confirmations
+      toastAdded: 'Added "{0}" to whitelist',
+      toastRemoved: 'Removed "{0}" from whitelist',
+      toastCleared: 'All whitelisted domains cleared',
+      toastReset: 'Reset all settings to defaults',
+      toastExported: 'Whitelist exported successfully',
+      toastImported: 'Imported {0} domain{1}',
+      toastEnabled: 'MaiTab enabled',
+      toastPaused: 'MaiTab paused',
+      toastGlobalOn: 'Global tab switching turned ON',
+      toastGlobalOff: 'Global tab switching turned OFF',
+      toastOpenNextOn: 'Opening tabs next to current tab',
+      toastOpenNextOff: 'Opening tabs at end of strip',
+      confirmClear: 'Are you sure you want to clear all whitelisted websites?',
+      confirmReset: 'Reset all MaiTab settings and whitelist to defaults?'
+    },
+
+    'zh-CN': {
+      // General & Brand
+      extName: 'MaiTab - 在新标签页打开链接',
+      extDesc: '左键点击链接时在新标签页打开，不打断当前浏览会话；支持自动切换开关与网站白名单覆盖。',
+      defaultTitle: 'MaiTab',
+      brandVersion: 'v1.0',
+      masterToggleTitle: '启用或暂停 MaiTab 链接拦截',
+      language: '语言',
+      optionsLink: '设置 ↗',
+      advancedSettings: '高级设置',
+      footerHint: '左键点击链接在新标签页打开',
+      resetToDefaults: '恢复默认设置',
+
+      // Disabled State
+      disabledBanner: '扩展目前已暂停，链接将按浏览器默认方式打开。',
+
+      // Current Site Card
+      currentWebsite: '当前网站',
+      internalPage: '浏览器内置 / 特殊页面',
+      badgeChecking: '检查中...',
+      badgeInactive: '未生效',
+      badgePaused: '已暂停',
+      badgeForeground: '前台切换',
+      badgeForegroundWhitelisted: '前台切换 (白名单)',
+      badgeBackground: '后台打开',
+      btnWhitelist: '+ 白名单',
+      btnWhitelisted: '✓ 已在白名单',
+      titleWhitelistCurrent: '点击将当前网站加入白名单，强制前台打开',
+      titleRemoveCurrent: '点击将当前网站从白名单移除',
+      hintInternal: 'MaiTab 不会在浏览器内置页面或扩展管理页面中运行。',
+      hintPaused: '扩展已暂停，点击链接将按浏览器默认方式导航。',
+      hintForegroundGlobal: '将自动切换至新标签页（全局自动切换已开启）。',
+      hintForegroundWhitelisted: '将自动切换至新标签页，因为当前网站已列入白名单。',
+      hintBackground: '将在后台静默打开新标签页，保持当前页面阅读不被打断。',
+
+      // Global Tab Switching Toggle
+      autoSwitchTitle: '自动切换至新标签页',
+      autoSwitchDescOn: '开启时，点击所有网站的链接都会在新标签页打开并立即切换焦点。',
+      autoSwitchDescOff: '关闭时，链接将在后台静默打开，保持当前页面阅读不被打断。',
+      calloutGlobalOn: '<strong>全局切换开启：</strong>左键点击链接将在新标签页打开并立即获得焦点。',
+      calloutGlobalOff: '<strong>全局切换关闭：</strong>链接在后台打开（白名单网站仍将自动切换到前台）。',
+
+      // Whitelist Section
+      whitelistTitle: '自动切换白名单',
+      whitelistDesc: '无论全局切换是否开启，此列表中的网站在点击链接时始终自动切换到新标签页（自动包含子域名）。',
+      inputPlaceholderDomain: '例如 github.com 或 news.ycombinator.com',
+      btnAdd: '添加',
+      btnAddWebsite: '添加网站',
+      subdomainsTag: '+子域名',
+      emptyWhitelistTitle: '暂无白名单网站',
+      emptyWhitelistDesc: '在上方添加域名，即可在点击其链接时始终自动切换到新标签页。',
+      removeAria: '从白名单移除 {0}',
+      filterPlaceholder: '搜索过滤白名单域名...',
+
+      // Options Page - General Preferences
+      optTitle: 'MaiTab 设置',
+      optSubtitle: '配置链接打开与标签页焦点切换行为',
+      generalPreferences: '通用偏好设置',
+      optEnableLabel: '启用 MaiTab',
+      optEnableDesc: '启用后，左键点击网页链接将在新标签页中打开，而不是离开当前页面。',
+      optGlobalSwitchLabel: '全局自动切换标签页',
+      optGlobalSwitchDesc: '控制 Chrome 是否在打开新标签页时自动将焦点切换至该标签页。',
+      optBulletOn: '<strong>已开启：</strong>点击任何链接都会在新标签页打开并立即切换焦点。',
+      optBulletOff: '<strong>已关闭（默认）：</strong>链接在后台标签页打开，不会中断当前的阅读会话（白名单网站除外）。',
+      optOpenNextLabel: '在当前标签页右侧打开',
+      optOpenNextDesc: '将新打开的标签页放置在当前标签页右侧，还原 Chrome 原生中键点击行为。',
+
+      // Options Page - Whitelist Management
+      optWhitelistHeading: '网站自动切换白名单',
+      optWhitelistSubheading: '此处列出的网站在点击链接时将<strong>始终自动切换焦点</strong>至新标签页（即使全局自动切换已关闭）。自动匹配所有子域名。',
+      domainCountBadge: '{0} 个域名',
+      btnExport: '导出',
+      btnImport: '导入',
+      btnClearAll: '清空全部',
+      thDomainPattern: '域名规则',
+      thMatchingScope: '匹配范围',
+      thAction: '操作',
+      scopeDescription: '匹配 {0} 及其所有子域名 (*.{0})',
+      optEmptyStateTitle: '未找到白名单网站',
+      optEmptyStateDesc: '在上方添加域名，即可在点击其链接时始终自动切换到新标签页。',
+
+      // Interactive Tester
+      testerTitle: '交互式域名匹配测试器',
+      testerSubtitle: '输入任意网址或域名，即可模拟当前白名单与全局设置下的标签页打开与切换效果。',
+      testerPlaceholder: '输入要测试的网址或域名，例如 https://gist.github.com/my-gist',
+      testerNormalizedHost: '标准化主机名：',
+      testerWhitelistMatch: '白名单匹配状态：',
+      testerResultingBehavior: '最终标签页行为：',
+      testerInvalidInput: '无效输入',
+      testerEnterValidPrompt: '请输入有效的网址或主机名进行测试。',
+      testerMatchedBadge: '已命中白名单 (匹配规则: {0})',
+      testerNotMatchedBadge: '未在白名单中',
+      testerForegroundBadge: '前台标签页（自动切换）',
+      testerBackgroundBadge: '后台标签页（静默打开）',
+      testerPausedBadge: '扩展已暂停',
+      testerExplainPaused: '扩展目前已暂停。点击链接将按浏览器默认方式打开。',
+      testerExplainGlobalOn: '来自 "{0}" 的链接将打开并立即聚焦新标签页，因为全局自动切换已开启。',
+      testerExplainWhitelisted: '来自 "{0}" 的链接将打开并聚焦新标签页，因为命中了白名单规则 "{1}"，覆盖了全局关闭设置。',
+      testerExplainBackground: '来自 "{0}" 的链接将在后台打开，不打扰当前阅读（全局切换关闭且该网站未列入白名单）。',
+
+      // Technical Documentation Section
+      docHeading: '域名匹配与链接拦截原理',
+      docDomainRulesTitle: '域名匹配规则：',
+      docRuleExact: '<strong>完全匹配：</strong><code>example.com</code> 精确匹配访问 <code>example.com</code>。',
+      docRuleSubdomains: '<strong>子域名匹配：</strong><code>example.com</code> 还会自动匹配 <code>news.example.com</code>、<code>blog.example.com</code> 等任意级子域名。',
+      docRuleSafety: '<strong>防止误匹配：</strong><code>example.com</code> 绝不会误匹配 <code>fakeexample.com</code> 或 <code>example.com.phishing.org</code>。',
+      docLinkSafetyTitle: '链接点击安全保障：',
+      docSafetyModifiers: '<strong>修饰键支持：</strong>完美保留原生快捷键（Ctrl+点击、Shift+点击、Alt+点击、Cmd+点击），不受干扰。',
+      docSafetyClicks: '<strong>右键与中键：</strong>仅拦截常规左键点击。右键菜单与原生中键功能完全保留。',
+      docSafetyHash: '<strong>页内锚点：</strong>同页锚点跳转（如 <code>#comments</code>）正常平滑滚动，不打开多余标签页。',
+      docSafetyControls: '<strong>交互式控件：</strong>按钮、输入框、下拉框、文本选中文本及 <code>download</code> 下载链接均正常运作。',
+
+      // Errors & Validation
+      errEnterDomain: '请输入域名或网址。',
+      errInvalidDomain: '域名格式无效。请输入有效域名，如 "example.com" 或 "sub.domain.org"。',
+      errDomainExists: '"{0}" 已在您的白名单中。',
+      errFileParse: '解析导入文件失败：{0}',
+
+      // Toasts & Confirmations
+      toastAdded: '已将 "{0}" 添加至白名单',
+      toastRemoved: '已将 "{0}" 从白名单移除',
+      toastCleared: '已清空所有白名单域名',
+      toastReset: '已恢复所有设置至默认值',
+      toastExported: '白名单已成功导出',
+      toastImported: '成功导入 {0} 个域名',
+      toastEnabled: 'MaiTab 已启用',
+      toastPaused: 'MaiTab 已暂停',
+      toastGlobalOn: '全局自动切换已开启',
+      toastGlobalOff: '全局自动切换已关闭',
+      toastOpenNextOn: '新标签页将在当前标签页右侧打开',
+      toastOpenNextOff: '新标签页将在标签栏末尾打开',
+      confirmClear: '确定要清空所有白名单网站吗？',
+      confirmReset: '确定要将所有 MaiTab 设置和白名单重置为默认值吗？'
+    },
+
+    ja: {
+      // General & Brand
+      extName: 'MaiTab - リンクを新しいタブで開く',
+      extDesc: '左クリックしたリンクを現在の閲覧を妨げずに新しいタブで開き、自動タブ切り替えとドメインホワイトリスト機能を提供します。',
+      defaultTitle: 'MaiTab',
+      brandVersion: 'v1.0',
+      masterToggleTitle: 'MaiTabのリンク捕捉を有効化/一時停止',
+      language: '言語',
+      optionsLink: '設定 ↗',
+      advancedSettings: '高度な設定',
+      footerHint: '左クリックでリンクを新規タブで開く',
+      resetToDefaults: 'デフォルトに戻す',
+
+      // Disabled State
+      disabledBanner: '拡張機能は現在一時停止中です。リンクは通常どおり開きます。',
+
+      // Current Site Card
+      currentWebsite: '現在のウェブサイト',
+      internalPage: 'ブラウザ内蔵 / 特殊ページ',
+      badgeChecking: '確認中...',
+      badgeInactive: '無効',
+      badgePaused: '一時停止',
+      badgeForeground: 'フォアグラウンド',
+      badgeForegroundWhitelisted: 'フォアグラウンド (登録済み)',
+      badgeBackground: 'バックグラウンド',
+      btnWhitelist: '+ ホワイトリスト',
+      btnWhitelisted: '✓ 登録済み',
+      titleWhitelistCurrent: 'このサイトをホワイトリストに追加し、フォアグラウンドで開く',
+      titleRemoveCurrent: 'このサイトをホワイトリストから削除する',
+      hintInternal: 'MaiTabはブラウザの内蔵ページや拡張機能ページでは動作しません。',
+      hintPaused: '拡張機能が無効です。通常のリンク遷移が行われます。',
+      hintForegroundGlobal: '新しいタブに自動で切り替わります（全体自動切り替えON）。',
+      hintForegroundWhitelisted: 'ホワイトリストに含まれているため、新しいタブに自動で切り替わります。',
+      hintBackground: '現在の閲覧を妨げず、バックグラウンドの新規タブで開きます。',
+
+      // Global Tab Switching Toggle
+      autoSwitchTitle: '新しいタブに自動で切り替える',
+      autoSwitchDescOn: 'すべてのウェブサイトでリンクが新しいタブで開き、直ちにタブがフォーカスされます。',
+      autoSwitchDescOff: 'リンクはバックグラウンドで開かれ、現在の閲覧セッションが中断されません。',
+      calloutGlobalOn: '<strong>全体切り替えON：</strong>リンクをクリックすると新しいタブが開き、直ちにフォーカスされます。',
+      calloutGlobalOff: '<strong>全体切り替えOFF：</strong>リンクはバックグラウンドで開きます（ホワイトリスト登録サイトはフォアグラウンドに切り替わります）。',
+
+      // Whitelist Section
+      whitelistTitle: '自動切り替えホワイトリスト',
+      whitelistDesc: '全体切り替えがオフの場合でも、このリストに登録されたウェブサイトでは常に新しいタブに切り替わります（サブドメイン自動対象）。',
+      inputPlaceholderDomain: '例: github.com や news.ycombinator.com',
+      btnAdd: '追加',
+      btnAddWebsite: 'ウェブサイトを追加',
+      subdomainsTag: '+サブドメイン',
+      emptyWhitelistTitle: 'ホワイトリスト登録がありません',
+      emptyWhitelistDesc: '上記でドメインを追加すると、リンククリック時に自動で新規タブにフォーカスします。',
+      removeAria: '{0} をホワイトリストから削除',
+      filterPlaceholder: 'ホワイトリストを検索...',
+
+      // Options Page - General Preferences
+      optTitle: 'MaiTab 設定',
+      optSubtitle: 'リンクオープンとタブ切り替え動作の設定',
+      generalPreferences: '一般設定',
+      optEnableLabel: 'MaiTab を有効化',
+      optEnableDesc: '有効にすると、ウェブリンクを左クリックした際に現在のタブを移動せず、新しいタブで開きます。',
+      optGlobalSwitchLabel: '全体タブ自動切り替え',
+      optGlobalSwitchDesc: '新規作成されたタブにChromeが自動でフォーカスを移動するかどうかを制御します。',
+      optBulletOn: '<strong>有効:</strong> すべてのリンクが新規タブで開き、直ちにタブに切り替わります。',
+      optBulletOff: '<strong>無効（デフォルト）:</strong> リンクはバックグラウンドで開かれ、現在の読書を妨げません（ホワイトリスト対象を除く）。',
+      optOpenNextLabel: '現在のタブの隣に開く',
+      optOpenNextDesc: '新しく開いたタブを現在のタブのすぐ右側に配置し、Chrome標準の中クリック動作を再現します。',
+
+      // Options Page - Whitelist Management
+      optWhitelistHeading: 'ウェブサイト自動切り替えホワイトリスト',
+      optWhitelistSubheading: 'ここに登録されたウェブサイトは、全体タブ自動切り替えが無効の場合でも<strong>常に新しいタブへ切り替わります</strong>。サブドメインも自動的に対象となります。',
+      domainCountBadge: '{0} ドメイン',
+      btnExport: 'エクスポート',
+      btnImport: 'インポート',
+      btnClearAll: 'すべて削除',
+      thDomainPattern: 'ドメイン規則',
+      thMatchingScope: '対象範囲',
+      thAction: '操作',
+      scopeDescription: '{0} およびそのサブドメイン (*.{0}) に一致',
+      optEmptyStateTitle: 'ホワイトリスト登録サイトがありません',
+      optEmptyStateDesc: '上記でドメインを追加すると、常に新しいタブにフォーカスします。',
+
+      // Interactive Tester
+      testerTitle: 'インタラクティブなドメイン照合テスター',
+      testerSubtitle: '任意のURLまたはドメインを入力して、現在の設定とホワイトリストでフォアグラウンドまたはバックグラウンドのどちらで開くかをテストします。',
+      testerPlaceholder: 'テストするURLまたはドメインを入力 (例: https://gist.github.com/my-gist)',
+      testerNormalizedHost: '正規化ホスト名:',
+      testerWhitelistMatch: 'ホワイトリスト照合:',
+      testerResultingBehavior: '最終タブ動作:',
+      testerInvalidInput: '無効な入力',
+      testerEnterValidPrompt: '有効なURLまたはホスト名を入力してテストしてください。',
+      testerMatchedBadge: 'ホワイトリスト登録済み (一致規則: {0})',
+      testerNotMatchedBadge: 'ホワイトリスト未登録',
+      testerForegroundBadge: 'フォアグラウンドタブ（アクティブ）',
+      testerBackgroundBadge: 'バックグラウンドタブ',
+      testerPausedBadge: '拡張機能一時停止中',
+      testerExplainPaused: '拡張機能は現在一時停止中です。通常のブラウザリンク遷移が行われます。',
+      testerExplainGlobalOn: '全体タブ自動切り替えがONのため、「{0}」のリンクは直ちに新しいタブにフォーカスします。',
+      testerExplainWhitelisted: 'ホワイトリスト規則「{1}」に一致するため、「{0}」のリンクは全体設定を上書きして新しいタブにフォーカスします。',
+      testerExplainBackground: '全体切り替えがOFFかつ未登録のため、「{0}」のリンクはバックグラウンドで静かに開かれます。',
+
+      // Technical Documentation Section
+      docHeading: 'ドメイン照合とリンク捕捉の仕組み',
+      docDomainRulesTitle: 'ドメイン照合規則:',
+      docRuleExact: '<strong>完全一致:</strong> <code>example.com</code> は <code>example.com</code> へのアクセスと完全一致します。',
+      docRuleSubdomains: '<strong>サブドメイン照合:</strong> <code>example.com</code> は <code>news.example.com</code> や <code>blog.example.com</code> などの配下サブドメインも自動対象とします。',
+      docRuleSafety: '<strong>誤照合の防止:</strong> <code>example.com</code> が <code>fakeexample.com</code> や <code>example.com.phishing.org</code> に誤って一致することはありません。',
+      docLinkSafetyTitle: '安全なリンク捕捉:',
+      docSafetyModifiers: '<strong>修飾キー保持:</strong> ブラウザ標準のショートカット（Ctrl+クリック、Shift+クリック、Alt+クリック、Cmd+クリック）は干渉せずそのまま動作します。',
+      docSafetyClicks: '<strong>右クリック・中クリック:</strong> 通常の左クリックのみを対象とします。右クリックメニューや中クリックはブラウザに任せます。',
+      docSafetyHash: '<strong>ページ内アンカー:</strong> 同一ページ内のアンカーリンク（<code>#comments</code> など）は新規タブを開かず、スムーズにスクロールします。',
+      docSafetyControls: '<strong>対話的UI:</strong> ボタン、入力フィールド、セレクトボックス、テキスト選択、<code>download</code> 属性リンクは通常通り機能します。',
+
+      // Errors & Validation
+      errEnterDomain: 'ドメインまたはURLを入力してください。',
+      errInvalidDomain: 'ドメイン形式が無効です。「example.com」や「sub.domain.org」のような有効なドメインを入力してください。',
+      errDomainExists: '「{0}」は既にホワイトリストに存在します。',
+      errFileParse: 'インポートファイルの解析に失敗しました: {0}',
+
+      // Toasts & Confirmations
+      toastAdded: '「{0}」をホワイトリストに追加しました',
+      toastRemoved: '「{0}」をホワイトリストから削除しました',
+      toastCleared: 'すべてのホワイトリストドメインをクリアしました',
+      toastReset: 'すべての設定をデフォルトに戻しました',
+      toastExported: 'ホワイトリストを正常にエクスポートしました',
+      toastImported: '{0} 件のドメインをインポートしました',
+      toastEnabled: 'MaiTab を有効にしました',
+      toastPaused: 'MaiTab を一時停止しました',
+      toastGlobalOn: '全体自動切り替えをONにしました',
+      toastGlobalOff: '全体自動切り替えをOFFにしました',
+      toastOpenNextOn: 'タブを現在のタブの隣に開きます',
+      toastOpenNextOff: 'タブをタブバーの末尾に開きます',
+      confirmClear: 'すべてのホワイトリスト登録サイトを削除してもよろしいですか？',
+      confirmReset: 'すべての MaiTab 設定とホワイトリストをデフォルトに戻してもよろしいですか？'
+    }
+  };
+
+  let currentLanguage = DEFAULT_LANGUAGE;
+  const changeListeners = new Set();
+
+  /**
+   * Normalizes language tag to one of supported codes ('en', 'zh-CN', 'ja').
+   */
+  function normalizeLanguageCode(code) {
+    if (!code || typeof code !== 'string') {
+      return DEFAULT_LANGUAGE;
+    }
+
+    const lower = code.toLowerCase().trim();
+    if (lower.startsWith('zh')) {
+      return 'zh-CN';
+    }
+    if (lower.startsWith('ja')) {
+      return 'ja';
+    }
+    return 'en';
+  }
+
+  /**
+   * Detects the browser UI language.
+   */
+  function detectBrowserLanguage() {
+    if (typeof navigator !== 'undefined' && navigator.language) {
+      return normalizeLanguageCode(navigator.language);
+    }
+    return DEFAULT_LANGUAGE;
+  }
+
+  /**
+   * Retrieves the currently active language.
+   */
+  function getLanguage() {
+    return currentLanguage;
+  }
+
+  /**
+   * Sets the active language and notifies all registered listeners.
+   */
+  function setLanguage(lang) {
+    const normalized = normalizeLanguageCode(lang);
+    if (currentLanguage !== normalized) {
+      currentLanguage = normalized;
+      changeListeners.forEach(listener => {
+        try {
+          listener(currentLanguage);
+        } catch (err) {
+          console.error('[MaiTab i18n] Error in change listener:', err);
+        }
+      });
+    }
+    return currentLanguage;
+  }
+
+  /**
+   * Translates a message key into the active language, with parameter substitution.
+   *
+   * @param {string} key - Translation key
+   * @param {...any} args - Positional parameters ({0}, {1}, ...) or named object
+   * @returns {string} Translated string or key fallback
+   */
+  function t(key, ...args) {
+    const dict = TRANSLATIONS[currentLanguage] || TRANSLATIONS[DEFAULT_LANGUAGE];
+    const fallbackDict = TRANSLATIONS[DEFAULT_LANGUAGE];
+
+    let message = dict[key] !== undefined ? dict[key] : fallbackDict[key];
+    if (message === undefined) {
+      return key;
+    }
+
+    // Object parameters: t('key', { name: 'value' })
+    if (args.length === 1 && typeof args[0] === 'object' && args[0] !== null) {
+      const params = args[0];
+      return message.replace(/\{(\w+)\}/g, (match, paramName) => {
+        return params[paramName] !== undefined ? String(params[paramName]) : match;
+      });
+    }
+
+    // Positional parameters: t('key', 'arg0', 'arg1')
+    if (args.length > 0) {
+      return message.replace(/\{(\d+)\}/g, (match, index) => {
+        const idx = Number(index);
+        return args[idx] !== undefined ? String(args[idx]) : match;
+      });
+    }
+
+    return message;
+  }
+
+  /**
+   * Traverses DOM and translates elements with data-i18n attributes.
+   *
+   * @param {Document|HTMLElement} [rootNode=document]
+   */
+  function applyToDOM(rootNode) {
+    const doc = rootNode || (typeof document !== 'undefined' ? document : null);
+    if (!doc || typeof doc.querySelectorAll !== 'function') {
+      return;
+    }
+
+    // Translate text content or innerHTML
+    const textElements = doc.querySelectorAll('[data-i18n]');
+    textElements.forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (key) {
+        if (el.getAttribute('data-i18n-html') === 'true') {
+          el.innerHTML = t(key);
+        } else {
+          el.textContent = t(key);
+        }
+      }
+    });
+
+    // Translate placeholder attribute
+    const placeholderElements = doc.querySelectorAll('[data-i18n-placeholder]');
+    placeholderElements.forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      if (key) {
+        el.setAttribute('placeholder', t(key));
+      }
+    });
+
+    // Translate title attribute
+    const titleElements = doc.querySelectorAll('[data-i18n-title]');
+    titleElements.forEach(el => {
+      const key = el.getAttribute('data-i18n-title');
+      if (key) {
+        el.setAttribute('title', t(key));
+      }
+    });
+
+    // Translate aria-label attribute
+    const ariaElements = doc.querySelectorAll('[data-i18n-aria]');
+    ariaElements.forEach(el => {
+      const key = el.getAttribute('data-i18n-aria');
+      if (key) {
+        el.setAttribute('aria-label', t(key));
+      }
+    });
+  }
+
+  /**
+   * Registers a listener for language changes.
+   *
+   * @param {function(string): void} callback
+   */
+  function onLanguageChanged(callback) {
+    if (typeof callback === 'function') {
+      changeListeners.add(callback);
+    }
+  }
+
+  return {
+    SUPPORTED_LANGUAGES,
+    DEFAULT_LANGUAGE,
+    detectBrowserLanguage,
+    normalizeLanguageCode,
+    getLanguage,
+    setLanguage,
+    t,
+    applyToDOM,
+    onLanguageChanged,
+    _TRANSLATIONS: TRANSLATIONS
+  };
+});

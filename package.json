@@ -1,0 +1,16 @@
+{
+  "name": "maitab",
+  "version": "1.0.0",
+  "description": "Chrome extension to open links in new tabs without interrupting browsing sessions, with automatic tab switching toggle and domain whitelist overrides.",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
+  "keywords": [
+    "chrome-extension",
+    "tabs",
+    "links",
+    "manifest-v3"
+  ],
+  "author": "",
+  "license": "MIT"
+}

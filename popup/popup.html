@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MaiTab</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <img src="../icons/icon32.png" alt="MaiTab" class="brand-icon">
+        <div class="brand-text">
+          <h1 class="brand-title">MaiTab</h1>
+          <span class="brand-version" data-i18n="brandVersion">v1.0</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="lang-selector-wrap">
+          <select id="langSelect" class="lang-select" aria-label="Language">
+            <option value="en">English</option>
+            <option value="zh-CN">简体中文</option>
+            <option value="ja">日本語</option>
+          </select>
+        </div>
+        <div class="master-toggle-wrap" data-i18n-title="masterToggleTitle">
+          <label class="switch">
+            <input type="checkbox" id="masterEnabledToggle" checked>
+            <span class="slider round"></span>
+          </label>
+        </div>
+      </div>
+    </header>
+
+    <!-- Master Disabled Notice -->
+    <div id="disabledBanner" class="disabled-banner hidden">
+      <span data-i18n="disabledBanner">Extension is currently paused. Links will behave normally.</span>
+    </div>
+
+    <!-- Current Tab Status Card -->
+    <section class="card current-site-card" id="currentSiteSection">
+      <div class="card-header">
+        <span class="card-label" data-i18n="currentWebsite">Current Website</span>
+        <span id="siteStatusBadge" class="badge badge-gray" data-i18n="badgeChecking">Checking...</span>
+      </div>
+      <div class="current-site-row">
+        <div class="domain-info">
+          <svg class="icon-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+          <span id="currentDomainText" class="current-domain">Detecting...</span>
+        </div>
+        <button id="quickWhitelistBtn" class="btn btn-sm btn-secondary" disabled>
+          + Whitelist
+        </button>
+      </div>
+      <p id="siteBehaviorHint" class="site-behavior-hint"></p>
+    </section>
+
+    <!-- Global Tab Switching Toggle -->
+    <section class="card setting-card">
+      <div class="setting-row">
+        <div class="setting-info">
+          <label for="autoSwitchToggle" class="setting-title" data-i18n="autoSwitchTitle">Switch to New Tab Automatically</label>
+          <p id="autoSwitchDescription" class="setting-desc">
+            When enabled, Chrome automatically focuses the newly opened tab.
+          </p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="autoSwitchToggle">
+          <span class="slider round"></span>
+        </label>
+      </div>
+      <div id="globalToggleStateBadge" class="behavior-callout">
+        <!-- Live status explanation filled by JS -->
+      </div>
+    </section>
+
+    <!-- Website Whitelist Section -->
+    <section class="whitelist-section">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <h2 class="section-title" data-i18n="whitelistTitle">Automatic Switching Whitelist</h2>
+          <span id="whitelistCount" class="count-pill">0</span>
+        </div>
+        <a href="../options/options.html" target="_blank" class="link-btn" data-i18n="optionsLink" data-i18n-title="advancedSettings">Options ↗</a>
+      </div>
+      <p class="section-desc" data-i18n="whitelistDesc">
+        Websites that always switch to the new tab, even when the global switch toggle is off. Subdomains are automatically included.
+      </p>
+
+      <!-- Add Domain Input -->
+      <form id="addDomainForm" class="add-form">
+        <div class="input-group">
+          <input
+            type="text"
+            id="domainInput"
+            class="input-text"
+            data-i18n-placeholder="inputPlaceholderDomain"
+            placeholder="e.g. github.com or news.ycombinator.com"
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <button type="submit" id="addDomainBtn" class="btn btn-primary" data-i18n="btnAdd" data-i18n-title="btnAdd">
+            Add
+          </button>
+        </div>
+        <div id="inputError" class="input-error hidden"></div>
+      </form>
+
+      <!-- Whitelist List -->
+      <div class="whitelist-container">
+        <ul id="whitelistUl" class="whitelist-items">
+          <!-- Populated dynamically -->
+        </ul>
+        <div id="emptyWhitelist" class="empty-state">
+          <p data-i18n="emptyWhitelistTitle">No whitelisted domains yet.</p>
+          <span data-i18n="emptyWhitelistDesc">Add domains above to force automatic tab switching for them.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <span class="footer-hint" data-i18n="footerHint">Left-click links open in new tabs</span>
+      <a href="../options/options.html" target="_blank" class="footer-link" data-i18n="advancedSettings">Advanced Settings</a>
+    </footer>
+  </div>
+
+  <script src="../common/i18n.js"></script>
+  <script src="../common/domain-matcher.js"></script>
+  <script src="../common/storage.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "extName": {
+    "message": "MaiTab - Open Links in New Tabs",
+    "description": "Extension name"
+  },
+  "extDesc": {
+    "message": "Opens links in new tabs on left-click without interrupting your session, with automatic switching toggle and domain whitelist overrides.",
+    "description": "Extension description"
+  },
+  "defaultTitle": {
+    "message": "MaiTab",
+    "description": "Action icon tooltip"
+  }
+}
