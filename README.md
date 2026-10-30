@@ -15,10 +15,10 @@
     - **Update Available:** Displays the number of incoming commits along with a commit summary list.
     - **Checking:** Active inspection in progress with spinning indicator.
     - **Update Failed:** Descriptive failure messaging and diagnostics for network errors or conflicts.
-  - **Manual Synchronization Trigger:** Allows users to initiate in-place synchronization directly via the "Sync Now" button.
-  - **Automatic Status Refresh:** Automatically refreshes the displayed status to "Up to Date" once synchronization succeeds.
-  - **Local Work Protection:** Automatically protects uncommitted local modifications and untracked files via Git stashing throughout the synchronization lifecycle.
-  - **Runtime Adaptability:** Handles the security sandbox limitations of Chrome extensions by providing both a direct GitHub REST API inspector and a local synchronization bridge (`scripts/sync-server.js` / `npm run sync:server`), plus 1-click terminal commands (`npm run sync`).
+  - **One-Click Synchronization:** Initiates and completes repository synchronization directly by clicking the update button in the popup settings interface without copying terminal commands or executing manual scripts.
+  - **Automatic Background Bridge:** Automatically interfaces with the local synchronization service (`maitab-sync.service` / `scripts/sync-server.js`) to apply remote GitHub updates directly to the local project in-place.
+  - **Local Work Protection:** Automatically protects uncommitted local modifications and untracked files via Git stashing throughout the synchronization lifecycle, safely restoring work after merge.
+  - **Conflict Safety:** Detects any merge or rebase conflicts, listing conflicted files with diagnostic resolution instructions without silently discarding work or corrupting git state.
 - **Automatic System Theme Switching:**
   - **System Theme Option:** Added alongside the existing Light Mode and Dark Mode options in both the popup settings and advanced options interfaces.
   - **Real-Time OS Detection:** Automatically tracks the operating system's dark/light appearance settings via `prefers-color-scheme` in real time without requiring an extension or browser restart.
@@ -122,7 +122,7 @@
    - **Real-Time Status Detection:** Compares local commit and version info against the remote GitHub repository, accurately reporting whether you are **Up to Date**, have an **Update Available**, are currently **Checking**, or if an **Update Failed**.
    - **Manual Synchronization:** When updates are detected, users can trigger synchronization directly from the popup.
    - **Safe Stashing & Conflict Handling:** Preserves uncommitted work and local changes, detecting conflicts cleanly without overwriting local modifications.
-   - **Reliable Local Bridge:** Provides `scripts/sync-server.js` and terminal commands (`npm run sync`) to bridge Chrome extension sandbox limitations with safe local Git operations.
+   - **Direct One-Click Synchronization:** Seamlessly applies remote updates in-place directly from the popup settings interface with safe git stashing and conflict resolution.
 
 8. **Automatic System Theme Switching with Light & Dark Modes**
    - **Three Distinct Modes:** Supports **System (Automatic)**, **Light Mode**, and **Dark Mode**.
@@ -290,14 +290,14 @@ MaiTab features an integrated update-check and synchronization workflow directly
    - **Update Failed:** Displays specific error diagnostics (e.g. network reachability, rate limiting, or sync conflicts).
 
 ### How to Synchronize Updates
-1. When updates are available, click the **"Sync Now"** button in the popup status banner.
-2. The synchronization system safely handles the update:
+1. When updates are available, click the **"Update & Sync"** button directly in the popup settings interface.
+2. The synchronization system safely handles the update completely in-place:
    - **Safe Stashing:** Any uncommitted modifications, staged files, or untracked work in your local repository are automatically stashed so no work is ever lost or discarded.
-   - **In-Place Integration:** Remote commits are fetched and merged/rebased cleanly without manual re-cloning.
+   - **In-Place Integration:** Remote commits are fetched and merged/rebased cleanly without requiring manual commands or terminal re-cloning.
    - **Automatic Restoration:** Local uncommitted changes are restored back cleanly.
    - **Integrity Verification:** Post-sync tests verify that extension functionality remains intact.
 3. Upon completion, the popup status refreshes automatically to **Up to Date**.
-4. **Chrome Sandbox & Local Execution:** If the popup is running in a browser environment without the local sync agent, the extension clearly guides you to run `npm run sync` in your terminal (with a 1-click **Copy Command** button) to ensure Git operations have the necessary local filesystem permissions. You can also start the local background agent with `npm run sync:server`.
+4. **Zero Manual Steps:** No terminal commands or `npm run sync` script execution required—simply click to synchronize.
 
 ### Handling Conflicts Safely
 If conflicting changes exist between local work and remote commits:

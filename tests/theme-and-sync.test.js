@@ -129,10 +129,10 @@ async function launchChromeSession(port, debugPort) {
     return res.result.value ? JSON.parse(res.result.value) : null;
   };
 
-  const close = async () => {
+  const close = () => {
     try { ws.close(); } catch {}
-    chrome.kill();
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    try { chrome.kill('SIGKILL'); } catch {}
+    try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch {}
   };
 
   return { navigate, evaluate, close, consoleErrors };
@@ -145,8 +145,8 @@ test('Theme Support and Repository Synchronization Suite', async (t) => {
   const server = await startStaticServer(port);
   const session = await launchChromeSession(port, debugPort);
 
-  t.after(async () => {
-    await session.close();
+  t.after(() => {
+    session.close();
     server.close();
   });
 

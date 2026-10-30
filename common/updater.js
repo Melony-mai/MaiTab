@@ -248,16 +248,18 @@
       } catch (err) {
         // If local sync endpoint was explicitly specified or test server failed
         if (options.throwOnError) throw err;
+        return {
+          success: false,
+          status: 'UPDATE_FAILED',
+          error: err.message || 'Unable to connect to local synchronization service.'
+        };
       }
     }
 
-    // When running in browser extension sandbox without active sync server
     return {
       success: false,
       status: 'UPDATE_FAILED',
-      requiresLocalExecution: true,
-      command: 'npm run sync',
-      message: 'Direct Git synchronization requires local execution to safely protect uncommitted files and resolve conflicts. Run "npm run sync" in your terminal.'
+      error: 'Synchronization service is not available.'
     };
   }
 

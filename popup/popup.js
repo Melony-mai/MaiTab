@@ -25,7 +25,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const syncConflictBox = document.getElementById('syncConflictBox');
   const syncActionArea = document.getElementById('syncActionArea');
   const syncNowBtn = document.getElementById('syncNowBtn');
-  const copySyncCmdBtn = document.getElementById('copySyncCmdBtn');
 
   // DOM Elements - Current Tab Status Card
   const siteStatusBadge = document.getElementById('siteStatusBadge');
@@ -713,10 +712,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (syncStatusMessage) {
           syncStatusMessage.textContent = I18n.t('statusUpToDate');
         }
+        if (checkUpdateBtn) checkUpdateBtn.classList.remove('has-update');
         if (syncDetailsBox) syncDetailsBox.classList.add('hidden');
         if (syncActionArea) syncActionArea.classList.add('hidden');
       } else {
         // Update Available
+        if (checkUpdateBtn) checkUpdateBtn.classList.add('has-update');
         if (syncStatusBadge) {
           syncStatusBadge.className = 'badge badge-update';
           syncStatusBadge.textContent = I18n.t('badgeUpdateAvailable');
@@ -741,7 +742,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           syncNowBtn.classList.remove('hidden');
           syncNowBtn.disabled = false;
         }
-        if (copySyncCmdBtn) copySyncCmdBtn.classList.add('hidden');
       }
     } catch (err) {
       checkUpdateBtn.classList.remove('is-checking');
@@ -774,6 +774,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       syncNowBtn.disabled = false;
 
       if (result.success) {
+        if (checkUpdateBtn) checkUpdateBtn.classList.remove('has-update');
         if (syncStatusBadge) {
           syncStatusBadge.className = 'badge badge-success';
           syncStatusBadge.textContent = I18n.t('badgeUpToDate');
@@ -786,16 +787,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Re-check update status after short delay to refresh all state
         setTimeout(() => triggerUpdateCheck(), 1200);
-      } else if (result.requiresLocalExecution) {
-        if (syncStatusBadge) {
-          syncStatusBadge.className = 'badge badge-update';
-          syncStatusBadge.textContent = I18n.t('badgeUpdateAvailable');
-        }
-        if (syncStatusMessage) {
-          syncStatusMessage.textContent = I18n.t('syncLocalInstruction');
-        }
-        if (copySyncCmdBtn) copySyncCmdBtn.classList.remove('hidden');
-        if (syncNowBtn) syncNowBtn.classList.add('hidden');
       } else {
         if (syncStatusBadge) {
           syncStatusBadge.className = 'badge badge-danger';
@@ -823,7 +814,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   if (checkUpdateBtn) {
-    checkUpdateBtn.addEventListener('click', triggerUpdateCheck);
+    checkUpdateBtn.addEventListener('click', () => {
+      triggerUpdateCheck();
+    });
   }
 
   if (syncNowBtn) {
@@ -833,18 +826,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (dismissSyncBtn) {
     dismissSyncBtn.addEventListener('click', () => {
       if (syncStatusBanner) syncStatusBanner.classList.add('hidden');
-    });
-  }
-
-  if (copySyncCmdBtn) {
-    copySyncCmdBtn.addEventListener('click', () => {
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText('npm run sync').catch(() => {});
-      }
-      copySyncCmdBtn.textContent = I18n.t('copiedToClipboard');
-      setTimeout(() => {
-        copySyncCmdBtn.textContent = I18n.t('btnCopySyncCmd');
-      }, 2000);
     });
   }
 
