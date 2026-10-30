@@ -19,8 +19,32 @@
     whitelist: [],             // Whitelisted domains with per-entry focus options: [{ domain: string, autoFocus: boolean }]
     bypassList: [],            // Complete Bypass List (Silent List): [{ domain: string }]
     openNextToCurrent: true,   // Place new tab immediately adjacent to current tab
-    language: 'auto'           // Language preference: 'auto', 'en', 'zh-CN', 'ja'
+    language: 'auto',          // Language preference: 'auto', 'en', 'zh-CN', 'ja'
+    theme: 'dark'              // Theme preference: 'dark' or 'light'
   };
+
+  /**
+   * Browser localStorage fallback when chrome.storage is unavailable (e.g. during standalone testing).
+   */
+  const webStorageFallback = (typeof localStorage !== 'undefined') ? {
+    get: (defaults, callback) => {
+      try {
+        const raw = localStorage.getItem('maitab_settings');
+        const parsed = raw ? JSON.parse(raw) : {};
+        callback({ ...defaults, ...parsed });
+      } catch (e) {
+        callback({ ...defaults });
+      }
+    },
+    set: (items, callback) => {
+      try {
+        const raw = localStorage.getItem('maitab_settings');
+        const current = raw ? JSON.parse(raw) : {};
+        localStorage.setItem('maitab_settings', JSON.stringify({ ...current, ...items }));
+      } catch (e) {}
+      if (typeof callback === 'function') callback();
+    }
+  } : null;
 
   /**
    * Resolves the appropriate Chrome storage area (sync with local fallback).
@@ -29,7 +53,7 @@
     if (typeof chrome !== 'undefined' && chrome.storage) {
       return chrome.storage.sync || chrome.storage.local;
     }
-    return null;
+    return webStorageFallback;
   }
 
   /**
@@ -131,6 +155,9 @@
     normalized.openNextToCurrent = Boolean(normalized.openNextToCurrent);
     if (typeof normalized.language !== 'string') {
       normalized.language = 'auto';
+    }
+    if (normalized.theme !== 'light' && normalized.theme !== 'dark') {
+      normalized.theme = 'dark';
     }
 
     return normalized;
@@ -410,6 +437,12 @@
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
       chrome.storage.onChanged.addListener((changes, areaName) => {
         if (areaName === 'sync' || areaName === 'local') {
+          getSettings().then(callback);
+        }
+      });
+    } else if (typeof window !== 'undefined' && window.addEventListener) {
+      window.addEventListener('storage', (evt) => {
+        if (evt.key === 'maitab_settings') {
           getSettings().then(callback);
         }
       });

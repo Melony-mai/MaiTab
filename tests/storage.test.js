@@ -32,16 +32,23 @@ test('StorageManager', async (t) => {
       whitelist: [],
       bypassList: [],
       openNextToCurrent: true,
-      language: 'auto'
+      language: 'auto',
+      theme: 'dark'
     });
   });
 
-  await t.test('saves and retrieves updated settings', async () => {
+  await t.test('saves and retrieves updated settings including theme', async () => {
     const mock = createMockStorage();
-    await StorageManager.saveSettings({ autoSwitch: true }, mock);
+    await StorageManager.saveSettings({ autoSwitch: true, theme: 'light' }, mock);
     const settings = await StorageManager.getSettings(mock);
     assert.strictEqual(settings.autoSwitch, true);
     assert.strictEqual(settings.enabled, true); // default preserved
+    assert.strictEqual(settings.theme, 'light');
+
+    // Normalization defaults invalid theme back to dark
+    await StorageManager.saveSettings({ theme: 'invalid-theme' }, mock);
+    const normalizedSettings = await StorageManager.getSettings(mock);
+    assert.strictEqual(normalizedSettings.theme, 'dark');
   });
 
   await t.test('adds valid domain to whitelist with normalization and sorting', async () => {

@@ -1,6 +1,22 @@
-# MaiTab - Smart Tab Manager for Google Chrome (v1.2)
+# MaiTab - Smart Tab Manager for Google Chrome (v1.3)
 
-**MaiTab** is a lightweight, zero-dependency Google Chrome extension built strictly on **Manifest V3**. It enhances link-clicking behavior by opening left-clicked links in new tabs without interrupting your browsing flow on the current page. It features an authentic **macOS Dark Aqua / Apple System Settings** UI redesign, a **Complete Bypass List (Silent List)** with top precedence, a configurable **Global Focus Toggle**, a subdomain-aware **Website Whitelist with Independent Per-Website Focus Options**, and comprehensive multilingual support for **English**, **Chinese (Simplified)**, and **Japanese**.
+**MaiTab** is a lightweight, zero-dependency Google Chrome extension built strictly on **Manifest V3**. It enhances link-clicking behavior by opening left-clicked links in new tabs without interrupting your browsing flow on the current page. It features an authentic **macOS Aqua / Apple System Settings** UI with **Light Mode & Dark Mode** support, a **Complete Bypass List (Silent List)** with top precedence, a configurable **Global Focus Toggle**, a subdomain-aware **Website Whitelist with Independent Per-Website Focus Options**, a built-in **GitHub Repository Direct Synchronization** utility, and comprehensive multilingual support for **English**, **Chinese (Simplified)**, and **Japanese**.
+
+---
+
+## What's New in v1.3
+
+- **Light Mode and Dark Mode Support:**
+  - **Easily Accessible Quick Toggle:** Added a 1-click theme switch button with Sun and Moon icons directly in the header of both the popup settings interface and the advanced settings interface.
+  - **Interface Theme Preference Selector:** Added a dedicated Appearance Theme dropdown in Options > General Preferences.
+  - **Immediate Theme Application:** Switching themes instantly updates the entire UI via dynamic CSS variables without requiring a page reload or browser restart.
+  - **Comprehensive Component Adaptation:** Perfectly adapts all window backgrounds, cards, text hierarchy, buttons, inputs, segmented controls, badges, tables, testers, scrollbars, and toast notifications across both macOS Dark Aqua and macOS Light Aqua palettes.
+  - **Persistent Theme Preference:** Selected theme persists reliably across popup reopens and browser restarts via `chrome.storage` and local caching.
+- **Direct Iteration from GitHub Repository:**
+  - Added `scripts/sync-repo.js` (executable via `npm run sync`) to safely fetch, rebase, and synchronize development against the latest remote GitHub repository.
+  - Automatically protects uncommitted or untracked local modifications using safe temporary stashing.
+  - Verifies project integrity by executing the full automated test suite post-synchronization.
+- **Version bump to v1.3** across `manifest.json`, `package.json`, localization dictionaries, and interface headers.
 
 ---
 
@@ -160,7 +176,7 @@ Right-click the extension icon and select **Options**, or click **Options ↗** 
 
 ```text
 MaiTab/
-├── manifest.json                     # Chrome Manifest V3 configuration (v1.2)
+├── manifest.json                     # Chrome Manifest V3 configuration (v1.3)
 ├── _locales/                         # Standard Chrome extension locale messages
 │   ├── en/messages.json              # English extension metadata
 │   ├── zh_CN/messages.json           # Chinese (Simplified) metadata
@@ -170,18 +186,20 @@ MaiTab/
 ├── content/
 │   └── content.js                    # Content script for link click interception & listener lifecycle
 ├── common/
-│   ├── i18n.js                       # Centralized multilingual localization engine (v1.2)
+│   ├── i18n.js                       # Centralized multilingual localization engine (v1.3)
 │   ├── domain-matcher.js             # Domain normalization, whitelist & bypass matching logic
 │   ├── link-evaluator.js             # Click qualification, anchor safety, and bypass checks
-│   └── storage.js                    # Storage persistence for settings, whitelist & bypass list
+│   └── storage.js                    # Storage persistence for settings, whitelist, bypass & theme
 ├── popup/
-│   ├── popup.html                    # Extension popup layout with macOS Dark Aqua architecture
-│   ├── popup.css                     # macOS Dark Aqua System Settings styling (Sonoma/Ventura)
-│   └── popup.js                      # Popup controller with whitelist & bypass management
+│   ├── popup.html                    # Extension popup layout with Light & Dark macOS Aqua themes
+│   ├── popup.css                     # macOS Aqua System Settings styling with theme tokens
+│   └── popup.js                      # Popup controller with theme, whitelist & bypass management
 ├── options/
-│   ├── options.html                  # Options page with responsive macOS Dark Aqua layout
+│   ├── options.html                  # Options page with responsive macOS Light & Dark layout
 │   ├── options.css                   # Options page styles matching macOS design tokens
-│   └── options.js                    # Options page controller with import/export & simulation
+│   └── options.js                    # Options page controller with theme, import/export & simulation
+├── scripts/
+│   └── sync-repo.js                  # Direct iteration and synchronization utility for GitHub repo
 ├── icons/
 │   ├── icon16.png                    # Extension icon (16x16)
 │   ├── icon32.png                    # Extension icon (32x32)
@@ -192,14 +210,31 @@ MaiTab/
 │   ├── i18n.test.js                  # Multilingual translation & completeness tests
 │   ├── domain-matcher.test.js        # Domain normalization, whitelist, bypass & precedence tests
 │   ├── link-interceptor.test.js      # Click interception, safety edge cases & bypass tests
-│   ├── storage.test.js               # Storage persistence, CRUD & bypass list tests
+│   ├── storage.test.js               # Storage persistence, CRUD, theme & bypass list tests
 │   ├── manifest-and-integration.test.js # Manifest V3, 6-scenario verification & E2E simulation
-│   └── ui-layout-and-responsiveness.test.js # Real headless Chrome CDP layout & viewport tests
+│   ├── ui-layout-and-responsiveness.test.js # Real headless Chrome CDP layout & viewport tests
+│   └── theme-and-sync.test.js        # Light/Dark mode toggle, persistence & sync workflow tests
 ├── MaiTab.png                        # Master brand icon asset (512x512)
-├── package.json                      # Project metadata (v1.2.0) and test runner script
+├── package.json                      # Project metadata (v1.3.0) and test/sync scripts
 ├── POPUP_UI_SPEC.md                  # Primary UI design specification reference
-└── README.md                         # Technical documentation (v1.2)
+└── README.md                         # Technical documentation (v1.3)
 ```
+
+---
+
+## Direct GitHub Repository Iteration
+
+To safely pull and synchronize the latest changes from the remote GitHub repository while protecting local modifications:
+
+```bash
+npm run sync
+```
+
+This automated workflow:
+1. Detects any uncommitted work or untracked changes and temporarily stashes them safely.
+2. Fetches and rebases against `origin/main` to incorporate remote updates.
+3. Restores stashed work cleanly.
+4. Executes the full test suite (`npm test`) to guarantee project functionality.
 
 ---
 
@@ -214,13 +249,15 @@ npm test
 ```
 
 The test suite validates:
-1. **Complete Bypass List (Silent List):** Websites on the Complete Bypass List follow their native link-clicking behavior without interference, with listeners detached.
-2. **Whitelist Focus Behavior:** Websites on the regular whitelist continue to follow their configured automatic-focus behavior.
-3. **Global Settings Fallback:** Websites not included in either list follow the global settings.
-4. **Precedence Hierarchy:** Complete Bypass List strictly takes precedence when a website matches both lists.
-5. **Persistence Across Restarts:** Settings, whitelist, and bypass list persist across simulated browser restarts.
-6. **Manifest V3 Structure:** Schema compliance, version 1.2 consistency, permissions, icon files, and localization.
-7. **UI Layout & Responsiveness:** Verified via real headless Chrome DevTools Protocol (CDP) across multiple viewports and display scale factors (100%, 125%, 150%, 200%).
+1. **Light & Dark Theme Support:** Seamless toggle interactivity, immediate DOM application, persistence across restarts, and full visual adaptation across both themes.
+2. **Complete Bypass List (Silent List):** Websites on the Complete Bypass List follow their native link-clicking behavior without interference, with listeners detached.
+3. **Whitelist Focus Behavior:** Websites on the regular whitelist continue to follow their configured automatic-focus behavior.
+4. **Global Settings Fallback:** Websites not included in either list follow the global settings.
+5. **Precedence Hierarchy:** Complete Bypass List strictly takes precedence when a website matches both lists.
+6. **Persistence Across Restarts:** Settings, whitelist, bypass list, and theme preferences persist across simulated browser restarts.
+7. **Manifest V3 Structure:** Schema compliance, version 1.3 consistency, permissions, icon files, and localization.
+8. **UI Layout & Responsiveness:** Verified via real headless Chrome DevTools Protocol (CDP) across multiple viewports and display scale factors (100%, 125%, 150%, 200%).
+9. **GitHub Repository Synchronization:** Verified safe stashing, fetch, rebase, and restoration workflow.
 
 ---
 

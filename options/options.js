@@ -11,6 +11,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const optMasterEnabled = document.getElementById('optMasterEnabled');
   const optAutoSwitch = document.getElementById('optAutoSwitch');
   const optOpenNext = document.getElementById('optOpenNext');
+  const optThemeToggleBtn = document.getElementById('optThemeToggleBtn');
+  const optThemeIconSun = document.getElementById('optThemeIconSun');
+  const optThemeIconMoon = document.getElementById('optThemeIconMoon');
+  const optThemeSelect = document.getElementById('optThemeSelect');
   const resetDefaultsBtn = document.getElementById('resetDefaultsBtn');
   const toast = document.getElementById('toast');
 
@@ -102,6 +106,31 @@ document.addEventListener('DOMContentLoaded', async () => {
    */
   async function loadSettings() {
     currentSettings = await StorageManager.getSettings();
+
+    // Theme synchronization
+    const activeTheme = currentSettings.theme === 'light' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', activeTheme);
+    try {
+      localStorage.setItem('maitab_theme', activeTheme);
+    } catch (e) {}
+
+    if (optThemeSelect) {
+      optThemeSelect.value = activeTheme;
+    }
+
+    if (optThemeToggleBtn && optThemeIconSun && optThemeIconMoon) {
+      if (activeTheme === 'light') {
+        optThemeIconMoon.classList.remove('hidden');
+        optThemeIconSun.classList.add('hidden');
+        optThemeToggleBtn.title = I18n.t('themeSwitchToDark');
+        optThemeToggleBtn.setAttribute('aria-label', I18n.t('themeSwitchToDark'));
+      } else {
+        optThemeIconSun.classList.remove('hidden');
+        optThemeIconMoon.classList.add('hidden');
+        optThemeToggleBtn.title = I18n.t('themeSwitchToLight');
+        optThemeToggleBtn.setAttribute('aria-label', I18n.t('themeSwitchToLight'));
+      }
+    }
 
     setupLanguage(currentSettings.language);
 
@@ -523,7 +552,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const list = currentSettings.whitelist || [];
     const exportData = {
       app: 'MaiTab',
-      version: '1.2',
+      version: '1.3',
       exportedAt: new Date().toISOString(),
       whitelist: list
     };
@@ -542,7 +571,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const list = currentSettings.bypassList || [];
     const exportData = {
       app: 'MaiTab',
-      version: '1.2',
+      version: '1.3',
       exportedAt: new Date().toISOString(),
       bypassList: list
     };
@@ -671,6 +700,40 @@ document.addEventListener('DOMContentLoaded', async () => {
       await loadSettings();
     }
   });
+
+  // Theme Quick Toggle
+  if (optThemeToggleBtn) {
+    optThemeToggleBtn.addEventListener('click', async () => {
+      const nextTheme = (currentSettings && currentSettings.theme === 'light') ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', nextTheme);
+      try {
+        localStorage.setItem('maitab_theme', nextTheme);
+      } catch (e) {}
+
+      if (currentSettings) {
+        currentSettings.theme = nextTheme;
+      }
+      await StorageManager.saveSettings({ theme: nextTheme });
+      await loadSettings();
+    });
+  }
+
+  // Theme Select Dropdown
+  if (optThemeSelect) {
+    optThemeSelect.addEventListener('change', async () => {
+      const selectedTheme = optThemeSelect.value === 'light' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', selectedTheme);
+      try {
+        localStorage.setItem('maitab_theme', selectedTheme);
+      } catch (e) {}
+
+      if (currentSettings) {
+        currentSettings.theme = selectedTheme;
+      }
+      await StorageManager.saveSettings({ theme: selectedTheme });
+      await loadSettings();
+    });
+  }
 
   // Storage listener for background updates
   StorageManager.onSettingsChanged(() => {

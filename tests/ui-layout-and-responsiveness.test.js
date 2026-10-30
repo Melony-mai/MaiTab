@@ -206,8 +206,8 @@ test('UI Specification and Responsive Compatibility', async (t) => {
     assert.strictEqual(metrics.brandIconWidth, 22);
     assert.strictEqual(metrics.brandIconHeight, 22);
 
-    // Verify version badge v1.2
-    assert.strictEqual(metrics.badgeText, 'v1.2');
+    // Verify version badge v1.3
+    assert.strictEqual(metrics.badgeText, 'v1.3');
     assert.strictEqual(metrics.badgeSize, '11px');
 
     // Verify switch slider dimensions (38px x 22px)
@@ -301,7 +301,7 @@ test('UI Specification and Responsive Compatibility', async (t) => {
       assert.strictEqual(data.bg, 'rgb(28, 28, 30)', 'Options background must match macOS Dark Aqua');
       assert.strictEqual(data.color, 'rgb(245, 245, 247)', 'Options text must be #f5f5f7');
       assert.strictEqual(data.cardRadius, '10px');
-      assert.strictEqual(data.versionBadge, 'v1.2');
+      assert.strictEqual(data.versionBadge, 'v1.3');
     }
   });
 

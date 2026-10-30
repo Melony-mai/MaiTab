@@ -1,4 +1,5 @@
-:root {
+:root,
+[data-theme="dark"] {
   /* macOS Dark Aqua System Palette */
   --mac-window-bg:       #1c1c1e;
   --mac-card-bg:         rgba(255, 255, 255, 0.05);
@@ -19,6 +20,69 @@
   --mac-btn-active:      rgba(255, 255, 255, 0.05);
   --mac-focus-ring:      0 0 0 3px rgba(10, 132, 255, 0.35);
   --mac-shadow:          0 1px 3px rgba(0, 0, 0, 0.24);
+  --mac-scrollbar-thumb: rgba(255, 255, 255, 0.2);
+  --mac-scrollbar-thumb-hover: rgba(255, 255, 255, 0.35);
+  --mac-table-wrap-bg:   rgba(0, 0, 0, 0.2);
+  --mac-table-th-bg:     rgba(255, 255, 255, 0.04);
+  --mac-table-row-hover: rgba(255, 255, 255, 0.02);
+  --mac-code-bg:         rgba(255, 255, 255, 0.06);
+  --mac-tester-bg:       rgba(0, 0, 0, 0.22);
+  --mac-badge-counter-bg: rgba(255, 255, 255, 0.08);
+  --mac-badge-counter-border: rgba(255, 255, 255, 0.08);
+  --mac-badge-counter-color: rgba(235, 235, 245, 0.55);
+  --mac-toast-bg:        rgba(30, 30, 32, 0.95);
+  --mac-toast-color:     #f5f5f7;
+  --mac-toast-border:    rgba(255, 255, 255, 0.15);
+  --mac-select-option-bg: #252528;
+  --mac-select-arrow:    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='none' stroke='rgba(255,255,255,0.6)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='m2.5 3.5 2.5 2.5 2.5-2.5'/%3E%3C/svg%3E");
+  --mac-badge-gray-bg:   rgba(255, 255, 255, 0.08);
+  --mac-badge-gray-border: rgba(255, 255, 255, 0.08);
+  --mac-badge-gray-color: rgba(235, 235, 245, 0.55);
+  --mac-brand-shadow:    0 2px 6px rgba(0, 0, 0, 0.35);
+  --mac-btn-shadow:      0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] {
+  /* macOS Light Aqua System Palette */
+  --mac-window-bg:       #f5f5f7;
+  --mac-card-bg:         #ffffff;
+  --mac-card-border:     rgba(0, 0, 0, 0.08);
+  --mac-row-border:      rgba(0, 0, 0, 0.06);
+  --mac-text-primary:    #1d1d1f;
+  --mac-text-secondary:  rgba(60, 60, 67, 0.65);
+  --mac-text-muted:      rgba(60, 60, 67, 0.42);
+  --mac-accent:          #0071e3;
+  --mac-accent-hover:    #0077ED;
+  --mac-success:         #34c759;
+  --mac-switch-off:      rgba(120, 120, 128, 0.22);
+  --mac-input-bg:        #ffffff;
+  --mac-input-border:    rgba(0, 0, 0, 0.16);
+  --mac-btn-bg:          rgba(0, 0, 0, 0.05);
+  --mac-btn-border:      rgba(0, 0, 0, 0.12);
+  --mac-btn-hover:       rgba(0, 0, 0, 0.08);
+  --mac-btn-active:      rgba(0, 0, 0, 0.12);
+  --mac-focus-ring:      0 0 0 3px rgba(0, 113, 227, 0.35);
+  --mac-shadow:          0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --mac-scrollbar-thumb: rgba(0, 0, 0, 0.18);
+  --mac-scrollbar-thumb-hover: rgba(0, 0, 0, 0.32);
+  --mac-table-wrap-bg:   rgba(0, 0, 0, 0.02);
+  --mac-table-th-bg:     rgba(0, 0, 0, 0.03);
+  --mac-table-row-hover: rgba(0, 0, 0, 0.02);
+  --mac-code-bg:         rgba(0, 0, 0, 0.05);
+  --mac-tester-bg:       rgba(0, 0, 0, 0.03);
+  --mac-badge-counter-bg: rgba(0, 0, 0, 0.06);
+  --mac-badge-counter-border: rgba(0, 0, 0, 0.08);
+  --mac-badge-counter-color: rgba(60, 60, 67, 0.7);
+  --mac-toast-bg:        rgba(255, 255, 255, 0.95);
+  --mac-toast-color:     #1d1d1f;
+  --mac-toast-border:    rgba(0, 0, 0, 0.12);
+  --mac-select-option-bg: #ffffff;
+  --mac-select-arrow:    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='none' stroke='rgba(0,0,0,0.6)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='m2.5 3.5 2.5 2.5 2.5-2.5'/%3E%3C/svg%3E");
+  --mac-badge-gray-bg:   rgba(0, 0, 0, 0.06);
+  --mac-badge-gray-border: rgba(0, 0, 0, 0.08);
+  --mac-badge-gray-color: rgba(60, 60, 67, 0.7);
+  --mac-brand-shadow:    0 2px 5px rgba(0, 0, 0, 0.12);
+  --mac-btn-shadow:      0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 * {
@@ -51,12 +115,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--mac-scrollbar-thumb);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.35);
+  background: var(--mac-scrollbar-thumb-hover);
 }
 
 .page-container {
@@ -89,7 +153,7 @@ body {
   width: 40px;
   height: 40px;
   border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--mac-brand-shadow);
   flex-shrink: 0;
 }
 
@@ -125,7 +189,47 @@ body {
   flex-shrink: 0;
 }
 
-.lang-selector-wrap {
+/* Theme Toggle Button */
+.theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 31px;
+  height: 31px;
+  padding: 0;
+  background-color: var(--mac-btn-bg);
+  border: 1px solid var(--mac-btn-border);
+  border-radius: 6px;
+  color: var(--mac-text-secondary);
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.theme-toggle-btn:hover {
+  background-color: var(--mac-btn-hover);
+  color: var(--mac-text-primary);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+[data-theme="light"] .theme-toggle-btn:hover {
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.theme-toggle-btn:focus-visible {
+  border-color: var(--mac-accent);
+  box-shadow: var(--mac-focus-ring);
+}
+
+.theme-icon {
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+}
+
+.lang-selector-wrap,
+.theme-select-wrap {
   position: relative;
 }
 
@@ -135,7 +239,7 @@ select.select-focus {
   appearance: none;
   -webkit-appearance: none;
   background-color: var(--mac-btn-bg);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='none' stroke='rgba(255,255,255,0.6)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='m2.5 3.5 2.5 2.5 2.5-2.5'/%3E%3C/svg%3E");
+  background-image: var(--mac-select-arrow);
   background-repeat: no-repeat;
   background-position: right 8px center;
   border: 1px solid var(--mac-btn-border);
@@ -156,6 +260,11 @@ select.select-focus:hover {
   border-color: rgba(255, 255, 255, 0.18);
 }
 
+[data-theme="light"] select.lang-select:hover,
+[data-theme="light"] select.select-focus:hover {
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
 select.lang-select:focus,
 select.select-focus:focus {
   border-color: var(--mac-accent);
@@ -164,8 +273,8 @@ select.select-focus:focus {
 
 select.lang-select option,
 select.select-focus option {
-  background-color: #252528;
-  color: #f5f5f7;
+  background-color: var(--mac-select-option-bg);
+  color: var(--mac-text-primary);
 }
 
 /* Inset Cards */
@@ -212,9 +321,9 @@ select.select-focus option {
   font-weight: 500;
   padding: 2px 8px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--mac-text-secondary);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--mac-badge-counter-bg);
+  color: var(--mac-badge-counter-color);
+  border: 1px solid var(--mac-badge-counter-border);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -366,12 +475,16 @@ input:disabled + .slider {
   background: var(--mac-btn-bg);
   color: var(--mac-text-primary);
   border: 1px solid var(--mac-btn-border);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--mac-btn-shadow);
 }
 
 .btn-secondary:hover:not(:disabled) {
   background: var(--mac-btn-hover);
   border-color: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="light"] .btn-secondary:hover:not(:disabled) {
+  border-color: rgba(0, 0, 0, 0.2);
 }
 
 .btn-secondary:active:not(:disabled) {
@@ -501,7 +614,7 @@ input:disabled + .slider {
   border: 1px solid var(--mac-card-border);
   border-radius: 8px;
   overflow-x: auto;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--mac-table-wrap-bg);
 }
 
 .whitelist-table {
@@ -513,7 +626,7 @@ input:disabled + .slider {
 }
 
 .whitelist-table th {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--mac-table-th-bg);
   color: var(--mac-text-secondary);
   font-size: 11px;
   font-weight: 600;
@@ -535,12 +648,12 @@ input:disabled + .slider {
 }
 
 .whitelist-table tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.02);
+  background-color: var(--mac-table-row-hover);
 }
 
 .domain-code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--mac-code-bg);
   padding: 3px 7px;
   border-radius: 4px;
   font-size: 12.5px;
@@ -565,6 +678,10 @@ input:disabled + .slider {
 
 .label-focus-on {
   color: #30d158;
+}
+
+[data-theme="light"] .label-focus-on {
+  color: #248a3d;
 }
 
 .label-focus-off {
@@ -614,7 +731,7 @@ input:disabled + .slider {
 }
 
 .tester-result {
-  background: rgba(0, 0, 0, 0.22);
+  background: var(--mac-tester-bg);
   border: 1px solid var(--mac-card-border);
   border-radius: 8px;
   padding: 14px;
@@ -639,7 +756,7 @@ input:disabled + .slider {
 
 .tester-code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--mac-code-bg);
   padding: 2px 7px;
   border-radius: 4px;
   color: var(--mac-text-primary);
@@ -690,6 +807,10 @@ input:disabled + .slider {
   color: var(--mac-accent);
 }
 
+[data-theme="light"] .doc-content code {
+  background: rgba(0, 113, 227, 0.08);
+}
+
 /* Badges */
 .badge {
   font-size: 11px;
@@ -701,12 +822,15 @@ input:disabled + .slider {
   align-items: center;
   user-select: none;
   flex-shrink: 0;
+  background: var(--mac-badge-gray-bg);
+  color: var(--mac-badge-gray-color);
+  border: 1px solid var(--mac-badge-gray-border);
 }
 
 .badge-gray {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--mac-text-secondary);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--mac-badge-gray-bg);
+  color: var(--mac-badge-gray-color);
+  border: 1px solid var(--mac-badge-gray-border);
 }
 
 .badge-success {
@@ -715,10 +839,22 @@ input:disabled + .slider {
   border: 1px solid rgba(52, 199, 89, 0.3);
 }
 
+[data-theme="light"] .badge-success {
+  background: rgba(52, 199, 89, 0.14);
+  color: #248a3d;
+  border-color: rgba(52, 199, 89, 0.25);
+}
+
 .badge-info {
   background: rgba(10, 132, 255, 0.16);
   color: #0A84FF;
   border: 1px solid rgba(10, 132, 255, 0.3);
+}
+
+[data-theme="light"] .badge-info {
+  background: rgba(0, 113, 227, 0.12);
+  color: #0071e3;
+  border-color: rgba(0, 113, 227, 0.25);
 }
 
 .badge-bypassed {
@@ -727,10 +863,22 @@ input:disabled + .slider {
   border: 1px solid rgba(175, 82, 222, 0.3);
 }
 
+[data-theme="light"] .badge-bypassed {
+  background: rgba(175, 82, 222, 0.12);
+  color: #8944ab;
+  border-color: rgba(175, 82, 222, 0.25);
+}
+
 .badge-warning {
   background: rgba(255, 159, 10, 0.16);
   color: #ff9f0a;
   border: 1px solid rgba(255, 159, 10, 0.3);
+}
+
+[data-theme="light"] .badge-warning {
+  background: rgba(255, 149, 0, 0.14);
+  color: #b25000;
+  border-color: rgba(255, 149, 0, 0.25);
 }
 
 /* Toast */
@@ -739,12 +887,12 @@ input:disabled + .slider {
   bottom: 28px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(30, 30, 32, 0.95);
+  background: var(--mac-toast-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-  color: #f5f5f7;
+  border: 1px solid var(--mac-toast-border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  color: var(--mac-toast-color);
   border-radius: 8px;
   padding: 10px 20px;
   font-size: 13px;
