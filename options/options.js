@@ -101,6 +101,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     I18n.applyToDOM();
   }
 
+  function getSystemTheme() {
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      ? 'dark'
+      : 'light';
+  }
+
+  function resolveEffectiveTheme(prefTheme) {
+    if (prefTheme === 'system') {
+      return getSystemTheme();
+    }
+    return prefTheme === 'light' ? 'light' : 'dark';
+  }
+
   /**
    * Refreshes the options UI.
    */
@@ -108,27 +121,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     currentSettings = await StorageManager.getSettings();
 
     // Theme synchronization
-    const activeTheme = currentSettings.theme === 'light' ? 'light' : 'dark';
+    const savedTheme = currentSettings.theme || 'dark';
+    const activeTheme = resolveEffectiveTheme(savedTheme);
     document.documentElement.setAttribute('data-theme', activeTheme);
     try {
-      localStorage.setItem('maitab_theme', activeTheme);
+      localStorage.setItem('maitab_theme', savedTheme);
     } catch (e) {}
 
     if (optThemeSelect) {
-      optThemeSelect.value = activeTheme;
+      optThemeSelect.value = savedTheme;
     }
 
     if (optThemeToggleBtn && optThemeIconSun && optThemeIconMoon) {
       if (activeTheme === 'light') {
         optThemeIconMoon.classList.remove('hidden');
         optThemeIconSun.classList.add('hidden');
-        optThemeToggleBtn.title = I18n.t('themeSwitchToDark');
-        optThemeToggleBtn.setAttribute('aria-label', I18n.t('themeSwitchToDark'));
+        optThemeToggleBtn.title = savedTheme === 'system'
+          ? I18n.t('themeSystemTitle', I18n.t('themeLight'))
+          : I18n.t('themeSwitchToDark');
+        optThemeToggleBtn.setAttribute('aria-label', optThemeToggleBtn.title);
       } else {
         optThemeIconSun.classList.remove('hidden');
         optThemeIconMoon.classList.add('hidden');
-        optThemeToggleBtn.title = I18n.t('themeSwitchToLight');
-        optThemeToggleBtn.setAttribute('aria-label', I18n.t('themeSwitchToLight'));
+        optThemeToggleBtn.title = savedTheme === 'system'
+          ? I18n.t('themeSystemTitle', I18n.t('themeDark'))
+          : I18n.t('themeSwitchToLight');
+        optThemeToggleBtn.setAttribute('aria-label', optThemeToggleBtn.title);
       }
     }
 
@@ -704,7 +722,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Theme Quick Toggle
   if (optThemeToggleBtn) {
     optThemeToggleBtn.addEventListener('click', async () => {
-      const nextTheme = (currentSettings && currentSettings.theme === 'light') ? 'dark' : 'light';
+      const activeTheme = resolveEffectiveTheme(currentSettings?.theme || 'dark');
+      const nextTheme = activeTheme === 'light' ? 'dark' : 'light';
       document.documentElement.setAttribute('data-theme', nextTheme);
       try {
         localStorage.setItem('maitab_theme', nextTheme);
@@ -721,8 +740,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Theme Select Dropdown
   if (optThemeSelect) {
     optThemeSelect.addEventListener('change', async () => {
-      const selectedTheme = optThemeSelect.value === 'light' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', selectedTheme);
+      const val = optThemeSelect.value;
+      const selectedTheme = ['system', 'light', 'dark'].includes(val) ? val : 'dark';
+      const effectiveTheme = resolveEffectiveTheme(selectedTheme);
+      document.documentElement.setAttribute('data-theme', effectiveTheme);
       try {
         localStorage.setItem('maitab_theme', selectedTheme);
       } catch (e) {}
@@ -733,6 +754,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       await StorageManager.saveSettings({ theme: selectedTheme });
       await loadSettings();
     });
+  }
+
+  // Real-time System OS theme change listener
+  if (window.matchMedia) {
+    const colorSchemeMedia = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleMediaChange = async () => {
+      const settings = await StorageManager.getSettings();
+      if (settings.theme === 'system') {
+        await loadSettings();
+      }
+    };
+    if (typeof colorSchemeMedia.addEventListener === 'function') {
+      colorSchemeMedia.addEventListener('change', handleMediaChange);
+    } else if (typeof colorSchemeMedia.addListener === 'function') {
+      colorSchemeMedia.addListener(handleMediaChange);
+    }
   }
 
   // Storage listener for background updates

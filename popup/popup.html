@@ -7,7 +7,10 @@
   <script>
     (function() {
       try {
-        const theme = localStorage.getItem('maitab_theme') || 'dark';
+        let theme = localStorage.getItem('maitab_theme') || 'dark';
+        if (theme === 'system') {
+          theme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
         document.documentElement.setAttribute('data-theme', theme);
       } catch (e) {}
     })();
@@ -21,7 +24,15 @@
       <img src="../icons/icon32.png" alt="MaiTab" class="brand-icon" width="22" height="22">
       <div class="brand-text">
         <h1 class="brand-title">MaiTab</h1>
-        <span class="badge" data-i18n="brandVersion">v1.31</span>
+        <div class="version-wrap">
+          <span class="badge" data-i18n="brandVersion">v1.31</span>
+          <button type="button" id="checkUpdateBtn" class="btn-check-update" aria-label="Check for Updates" data-i18n-title="checkUpdateTitle" title="Check for Updates">
+            <svg class="icon-sync" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+            <span class="btn-check-text" data-i18n="btnCheckUpdate">Check</span>
+          </button>
+        </div>
       </div>
     </div>
     <div class="header-right">
@@ -57,6 +68,26 @@
     </div>
   </header>
 
+  <!-- Synchronization Status Card -->
+  <div id="syncStatusBanner" class="sync-status-card hidden">
+    <div class="sync-status-main">
+      <div class="sync-status-header">
+        <span id="syncStatusBadge" class="badge badge-gray" data-i18n="badgeCheckingUpdates">Checking</span>
+        <span id="syncStatusMessage" class="sync-status-msg" data-i18n="statusChecking">Checking GitHub repository for latest commits...</span>
+        <button type="button" id="dismissSyncBtn" class="btn-dismiss-sync" aria-label="Dismiss" title="Dismiss">×</button>
+      </div>
+      <div id="syncDetailsBox" class="sync-details-box hidden">
+        <div class="sync-commits-header" data-i18n="syncIncomingCommits">Latest incoming commit(s):</div>
+        <ul id="syncCommitsList" class="sync-commits-list"></ul>
+        <div id="syncConflictBox" class="sync-conflict-box hidden"></div>
+      </div>
+      <div id="syncActionArea" class="sync-action-area hidden">
+        <button type="button" id="syncNowBtn" class="btn btn-sm btn-primary" data-i18n="btnSyncNow">Sync Now</button>
+        <button type="button" id="copySyncCmdBtn" class="btn btn-sm btn-secondary hidden" data-i18n="btnCopySyncCmd">Copy "npm run sync"</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Master Disabled Notice -->
   <div id="disabledBanner" class="disabled-banner hidden">
     <span data-i18n="disabledBanner">Extension is currently paused. Links will behave normally.</span>
@@ -86,9 +117,9 @@
         </button>
       </div>
       <div id="currentSiteFocusRow" class="setting-row current-site-focus-row hidden">
-        <span class="setting-label" data-i18n="currentSiteFocusLabel">Tab Focus:</span>
+        <span class="setting-label" data-i18n="currentSiteFocusLabel">Focus Mode:</span>
         <div class="unit-box">
-          <span id="currentSiteFocusText" class="current-site-focus-text">Foreground</span>
+          <span id="currentSiteFocusText" class="current-site-focus-text" data-i18n="focusModeFocused">Focused Mode</span>
           <label class="switch switch-xs" data-i18n-title="focusToggleAria">
             <input type="checkbox" id="currentSiteFocusToggle" checked>
             <span class="slider"></span>
@@ -118,6 +149,22 @@
       <div id="globalToggleStateBadge" class="behavior-callout">
         <!-- Live status explanation filled by JS -->
       </div>
+      <hr class="card-divider">
+      <div class="setting-row theme-setting-row">
+        <div class="setting-info">
+          <label for="popupThemeSelect" class="setting-label" data-i18n="themeSettingLabel">Theme Appearance</label>
+          <p class="setting-desc" data-i18n="themeSettingDesc">
+            Choose between System automatic theme, Light Mode, or Dark Mode.
+          </p>
+        </div>
+        <div class="theme-select-wrap">
+          <select id="popupThemeSelect" class="lang-select" aria-label="Theme">
+            <option value="system" data-i18n="themeSystem">System</option>
+            <option value="dark" data-i18n="themeDark">Dark Mode</option>
+            <option value="light" data-i18n="themeLight">Light Mode</option>
+          </select>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -139,33 +186,6 @@
 
     <!-- Tab 1: Whitelist Panel -->
     <div id="panelWhitelist" class="list-panel">
-      <p class="section-desc" data-i18n="whitelistDesc">
-        Websites with independent focus preferences that override the global focus toggle. Subdomains are automatically included.
-      </p>
-
-      <!-- Add Domain Input -->
-      <form id="addDomainForm" class="add-form">
-        <div class="input-group">
-          <input
-            type="text"
-            id="domainInput"
-            class="input-text mac-input"
-            data-i18n-placeholder="inputPlaceholderDomain"
-            placeholder="e.g. github.com or news.ycombinator.com"
-            autocomplete="off"
-            spellcheck="false"
-          >
-          <select id="popupNewDomainFocus" class="select-focus-sm lang-select" aria-label="Tab Focus Option">
-            <option value="true" data-i18n="whitelistFocusOn">Focus</option>
-            <option value="false" data-i18n="whitelistFocusOff">Background</option>
-          </select>
-          <button type="submit" id="addDomainBtn" class="btn btn-sm btn-primary" data-i18n="btnAdd" data-i18n-title="btnAdd">
-            Add
-          </button>
-        </div>
-        <div id="inputError" class="input-error hidden"></div>
-      </form>
-
       <!-- Whitelist List -->
       <div class="card list-card">
         <ul id="whitelistUl" class="whitelist-items">
@@ -173,7 +193,7 @@
         </ul>
         <div id="emptyWhitelist" class="empty-state">
           <p data-i18n="emptyWhitelistTitle">No whitelisted domains yet.</p>
-          <span data-i18n="emptyWhitelistDesc">Add domains above to customize their automatic tab focus behavior.</span>
+          <span data-i18n="emptyWhitelistDesc">Add websites from the Current Website section above to customize their automatic tab focus behavior.</span>
         </div>
       </div>
     </div>
@@ -222,6 +242,8 @@
     <a href="../options/options.html" target="_blank" class="footer-link" data-i18n="advancedSettings">Advanced Settings ↗</a>
   </footer>
 
+  <script src="../common/version-info.js"></script>
+  <script src="../common/updater.js"></script>
   <script src="../common/i18n.js"></script>
   <script src="../common/domain-matcher.js"></script>
   <script src="../common/storage.js"></script>

@@ -156,7 +156,7 @@
     if (typeof normalized.language !== 'string') {
       normalized.language = 'auto';
     }
-    if (normalized.theme !== 'light' && normalized.theme !== 'dark') {
+    if (normalized.theme !== 'light' && normalized.theme !== 'dark' && normalized.theme !== 'system') {
       normalized.theme = 'dark';
     }
 

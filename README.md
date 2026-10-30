@@ -6,13 +6,33 @@
 
 ## What's New in v1.31
 
+- **Public GitHub Repository & Open Access:**
+  - The repository is fully public and accessible on GitHub at [https://github.com/Melony-mai/MaiTab](https://github.com/Melony-mai/MaiTab), allowing transparent collaboration and updates.
+- **Manual Update Checking & In-Popup Synchronization:**
+  - **Accessible "Check for Updates" Button:** Positioned directly adjacent to the displayed extension version badge (`v1.31`) in the popup header.
+  - **Live Synchronization Status Feedback:**
+    - **Up to Date:** Local project is verified to be up to date with the remote repository on `origin/main`.
+    - **Update Available:** Displays the number of incoming commits along with a commit summary list.
+    - **Checking:** Active inspection in progress with spinning indicator.
+    - **Update Failed:** Descriptive failure messaging and diagnostics for network errors or conflicts.
+  - **Manual Synchronization Trigger:** Allows users to initiate in-place synchronization directly via the "Sync Now" button.
+  - **Automatic Status Refresh:** Automatically refreshes the displayed status to "Up to Date" once synchronization succeeds.
+  - **Local Work Protection:** Automatically protects uncommitted local modifications and untracked files via Git stashing throughout the synchronization lifecycle.
+  - **Runtime Adaptability:** Handles the security sandbox limitations of Chrome extensions by providing both a direct GitHub REST API inspector and a local synchronization bridge (`scripts/sync-server.js` / `npm run sync:server`), plus 1-click terminal commands (`npm run sync`).
+- **Automatic System Theme Switching:**
+  - **System Theme Option:** Added alongside the existing Light Mode and Dark Mode options in both the popup settings and advanced options interfaces.
+  - **Real-Time OS Detection:** Automatically tracks the operating system's dark/light appearance settings via `prefers-color-scheme` in real time without requiring an extension or browser restart.
+  - **Manual Override Preservation:** Manual selections (Light Mode or Dark Mode) remain strictly active and are preserved across reopens until the user switches back to System mode.
+  - **Cross-Interface Consistency:** Full visual harmony and state synchronization across popup settings and advanced settings pages.
+- **Optimized Popup Settings Interface:**
+  - Streamlined spacing, hierarchy, and component alignment to accommodate update checking and theme switching without crowding, horizontal overflow, or excessive scrolling.
 - **Direct GitHub Repository Iteration & Synchronization:**
   - **In-Place Codebase Updates:** Retrieve and synchronize the latest commits directly from the remote GitHub repository without requiring manual re-cloning or re-downloading.
   - **Preserves Local Modifications:** Automatically detects uncommitted work (modified files, staged changes, and untracked files) and preserves them safely using stashing throughout the synchronization cycle.
   - **Conflict Detection & Safe Diagnostics:** Detects Git merge/rebase conflicts and stash-pop conflicts safely, providing clear, actionable step-by-step diagnostic feedback when manual resolution is needed.
   - **Non-Destructive Status Inspection:** New `npm run sync:check` (or `--check` / `--dry-run`) command inspects incoming commits and divergence from remote without touching working files.
   - **Post-Synchronization Verification:** Automatically executes the complete test suite (`npm test`) post-synchronization to guarantee project functionality and prevent regressions.
-  - **Enhanced CLI & Scripts:** Added `npm run sync`, `npm run iterate`, and `npm run sync:check` with support for `--check`, `--merge`, `--no-tests`, and `--abort-on-conflict`.
+  - **Enhanced CLI & Scripts:** Added `npm run sync`, `npm run iterate`, `npm run sync:check`, and `npm run sync:server` with support for `--check`, `--merge`, `--no-tests`, and `--abort-on-conflict`.
 - **Project Version Update to v1.31:**
   - Updated project version to **v1.31** consistently across `manifest.json`, `package.json`, localization dictionaries (`en`, `zh-CN`, `ja`), interface badges, export metadata, and automated verification suites.
 
@@ -96,6 +116,19 @@
 6. **Interactive Domain Match Tester & Import/Export**
    - Dedicated options page includes an interactive tester to simulate how any URL or domain will behave under your current settings, displaying whether a site is Bypassed, Whitelisted, or Unlisted, and its resulting behavior.
    - Export and import both your Whitelist and Complete Bypass List in JSON format for easy backups and synchronization across devices.
+
+7. **Manual Update Checking and Synchronization**
+   - **Accessible Check Button:** Conveniently located next to the version badge in the popup header for instant access.
+   - **Real-Time Status Detection:** Compares local commit and version info against the remote GitHub repository, accurately reporting whether you are **Up to Date**, have an **Update Available**, are currently **Checking**, or if an **Update Failed**.
+   - **Manual Synchronization:** When updates are detected, users can trigger synchronization directly from the popup.
+   - **Safe Stashing & Conflict Handling:** Preserves uncommitted work and local changes, detecting conflicts cleanly without overwriting local modifications.
+   - **Reliable Local Bridge:** Provides `scripts/sync-server.js` and terminal commands (`npm run sync`) to bridge Chrome extension sandbox limitations with safe local Git operations.
+
+8. **Automatic System Theme Switching with Light & Dark Modes**
+   - **Three Distinct Modes:** Supports **System (Automatic)**, **Light Mode**, and **Dark Mode**.
+   - **Real-Time OS Synchronization:** In System mode, instantly listens and adapts to operating system appearance changes (`prefers-color-scheme`) without requiring an extension or browser reload.
+   - **Strict Manual Precedence:** Manual selections (Light or Dark) remain firmly locked and persist across sessions until you explicitly re-select System mode.
+   - **Full Interface Consistency:** Applies themes uniformly across the popup settings interface and the advanced settings interface.
 
 ---
 
@@ -200,6 +233,8 @@ MaiTab/
 ├── content/
 │   └── content.js                    # Content script for link click interception & listener lifecycle
 ├── common/
+│   ├── version-info.js               # Central version and commit info (v1.31)
+│   ├── updater.js                    # Manual update checker & synchronization client
 │   ├── i18n.js                       # Centralized multilingual localization engine (v1.31)
 │   ├── domain-matcher.js             # Domain normalization, whitelist & bypass matching logic
 │   ├── link-evaluator.js             # Click qualification, anchor safety, and bypass checks
@@ -207,13 +242,14 @@ MaiTab/
 ├── popup/
 │   ├── popup.html                    # Extension popup layout with Light & Dark macOS Aqua themes (v1.31)
 │   ├── popup.css                     # macOS Aqua System Settings styling with theme tokens
-│   └── popup.js                      # Popup controller with theme, whitelist & bypass management
+│   └── popup.js                      # Popup controller with theme, whitelist, bypass & update check
 ├── options/
 │   ├── options.html                  # Options page with responsive macOS Light & Dark layout (v1.31)
 │   ├── options.css                   # Options page styles matching macOS design tokens
 │   └── options.js                    # Options page controller with theme, import/export & simulation (v1.31)
 ├── scripts/
-│   └── sync-repo.js                  # Direct iteration and GitHub synchronization utility (v1.31)
+│   ├── sync-repo.js                  # Direct iteration and GitHub synchronization utility (v1.31)
+│   └── sync-server.js                # Local HTTP synchronization bridge server
 ├── icons/
 │   ├── icon16.png                    # Extension icon (16x16)
 │   ├── icon32.png                    # Extension icon (32x32)
@@ -228,12 +264,67 @@ MaiTab/
 │   ├── manifest-and-integration.test.js # Manifest V3, 6-scenario verification & E2E simulation (v1.31)
 │   ├── ui-layout-and-responsiveness.test.js # Real headless Chrome CDP layout & viewport tests (v1.31)
 │   ├── theme-and-sync.test.js        # Light/Dark mode toggle, persistence & sync workflow tests
-│   └── direct-iteration.test.js      # Direct repository iteration, conflict detection & version tests
+│   ├── direct-iteration.test.js      # Direct repository iteration, conflict detection & version tests
+│   ├── popup-whitelist-focus.test.js # Whitelist management & focus mode suite
+│   └── update-and-theme-system.test.js # Update checking, sync & real-time system theme suite
 ├── MaiTab.png                        # Master brand icon asset (512x512)
 ├── package.json                      # Project metadata (v1.31.0) and test/sync scripts
 ├── POPUP_UI_SPEC.md                  # Primary UI design specification reference (v1.31)
 └── README.md                         # Technical documentation (v1.31)
 ```
+
+---
+
+## Manual Update Checking & Synchronization
+
+MaiTab features an integrated update-check and synchronization workflow directly accessible inside the popup interface, designed specifically for rapid development and real-time synchronization with its remote GitHub repository.
+
+### How to Check for Updates
+1. Open the MaiTab extension popup by clicking the extension icon in Chrome's toolbar.
+2. In the header next to the version badge (`v1.31`), click the **"Check"** / **"Check for Updates"** button.
+3. MaiTab will inspect the remote GitHub repository (`main` branch) and local project state.
+4. The synchronization card displays the current status:
+   - **Up to Date:** Your local project matches the latest remote commit on GitHub.
+   - **Update Available:** New incoming commits were found on GitHub. The card displays the number of incoming commits and lists their summary titles and short commit hashes.
+   - **Checking:** An update check is currently contacting GitHub and local services.
+   - **Update Failed:** Displays specific error diagnostics (e.g. network reachability, rate limiting, or sync conflicts).
+
+### How to Synchronize Updates
+1. When updates are available, click the **"Sync Now"** button in the popup status banner.
+2. The synchronization system safely handles the update:
+   - **Safe Stashing:** Any uncommitted modifications, staged files, or untracked work in your local repository are automatically stashed so no work is ever lost or discarded.
+   - **In-Place Integration:** Remote commits are fetched and merged/rebased cleanly without manual re-cloning.
+   - **Automatic Restoration:** Local uncommitted changes are restored back cleanly.
+   - **Integrity Verification:** Post-sync tests verify that extension functionality remains intact.
+3. Upon completion, the popup status refreshes automatically to **Up to Date**.
+4. **Chrome Sandbox & Local Execution:** If the popup is running in a browser environment without the local sync agent, the extension clearly guides you to run `npm run sync` in your terminal (with a 1-click **Copy Command** button) to ensure Git operations have the necessary local filesystem permissions. You can also start the local background agent with `npm run sync:server`.
+
+### Handling Conflicts Safely
+If conflicting changes exist between local work and remote commits:
+- Synchronization safely pauses and protects your work.
+- Conflicted files are clearly listed with diagnostic resolution instructions.
+- Stashed changes remain safely preserved in `git stash list`.
+- No files are ever silently overwritten.
+
+---
+
+## Theme Modes: System, Light, and Dark
+
+MaiTab provides three distinct visual themes crafted according to Apple's macOS Aqua / System Settings design language:
+
+| Theme Mode | Description & Behavior |
+| :--- | :--- |
+| **System (Automatic)** | **Follows Operating System Appearance in Real Time.** Automatically switches between macOS Dark Aqua and macOS Light Aqua based on your operating system's theme (`prefers-color-scheme`). Changes take effect immediately without requiring a browser or extension restart. |
+| **Dark Mode** | **macOS Dark Aqua Palette.** Features a deep `#1c1c1e` window background, translucent grouped cards (`rgba(255, 255, 255, 0.05)`), neon-blue focus rings (`#0A84FF`), and light high-legibility typography (`#f5f5f7`). Remains active regardless of OS settings. |
+| **Light Mode** | **macOS Light Aqua Palette.** Features a crisp `#f5f5f7` window background, pure white cards (`#ffffff`), subtle borders (`rgba(0, 0, 0, 0.08)`), Apple blue accents (`#0071e3`), and deep dark typography (`#1d1d1f`). Remains active regardless of OS settings. |
+
+### Switching Themes
+- **In Popup Settings:**
+  - **Quick Toggle Button:** Click the Sun/Moon icon in the popup header to quickly toggle between Light Mode and Dark Mode.
+  - **Theme Appearance Selector:** In Popup > General Settings, select **System**, **Dark Mode**, or **Light Mode** from the dropdown menu.
+- **In Advanced Settings (Options Page):**
+  - Use the Sun/Moon quick toggle button in the header, or select your preference from the **Interface Theme** dropdown under **General Preferences**.
+- **Persistence:** Your theme selection is automatically saved in `chrome.storage` (and cached locally) and synchronized across all extension views in real time. Manual selections remain locked until you choose System mode again.
 
 ---
 

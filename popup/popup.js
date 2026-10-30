@@ -12,6 +12,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   const themeToggleBtn = document.getElementById('themeToggleBtn');
   const themeIconSun = document.getElementById('themeIconSun');
   const themeIconMoon = document.getElementById('themeIconMoon');
+  const popupThemeSelect = document.getElementById('popupThemeSelect');
+
+  // DOM Elements - Check Updates & Sync Card
+  const checkUpdateBtn = document.getElementById('checkUpdateBtn');
+  const syncStatusBanner = document.getElementById('syncStatusBanner');
+  const syncStatusBadge = document.getElementById('syncStatusBadge');
+  const syncStatusMessage = document.getElementById('syncStatusMessage');
+  const dismissSyncBtn = document.getElementById('dismissSyncBtn');
+  const syncDetailsBox = document.getElementById('syncDetailsBox');
+  const syncCommitsList = document.getElementById('syncCommitsList');
+  const syncConflictBox = document.getElementById('syncConflictBox');
+  const syncActionArea = document.getElementById('syncActionArea');
+  const syncNowBtn = document.getElementById('syncNowBtn');
+  const copySyncCmdBtn = document.getElementById('copySyncCmdBtn');
 
   // DOM Elements - Current Tab Status Card
   const siteStatusBadge = document.getElementById('siteStatusBadge');
@@ -70,6 +84,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     I18n.applyToDOM();
   }
 
+  function getSystemTheme() {
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      ? 'dark'
+      : 'light';
+  }
+
+  function resolveEffectiveTheme(prefTheme) {
+    if (prefTheme === 'system') {
+      return getSystemTheme();
+    }
+    return prefTheme === 'light' ? 'light' : 'dark';
+  }
+
   /**
    * Identifies the hostname of the currently active browser tab.
    */
@@ -98,23 +125,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     currentSettings = await StorageManager.getSettings();
 
     // 0. Theme synchronization
-    const activeTheme = currentSettings.theme === 'light' ? 'light' : 'dark';
+    const savedTheme = currentSettings.theme || 'dark';
+    const activeTheme = resolveEffectiveTheme(savedTheme);
     document.documentElement.setAttribute('data-theme', activeTheme);
     try {
-      localStorage.setItem('maitab_theme', activeTheme);
+      localStorage.setItem('maitab_theme', savedTheme);
     } catch (e) {}
+
+    if (popupThemeSelect) {
+      popupThemeSelect.value = savedTheme;
+    }
 
     if (themeToggleBtn && themeIconSun && themeIconMoon) {
       if (activeTheme === 'light') {
         themeIconMoon.classList.remove('hidden');
         themeIconSun.classList.add('hidden');
-        themeToggleBtn.title = I18n.t('themeSwitchToDark');
-        themeToggleBtn.setAttribute('aria-label', I18n.t('themeSwitchToDark'));
+        themeToggleBtn.title = savedTheme === 'system'
+          ? I18n.t('themeSystemTitle', I18n.t('themeLight'))
+          : I18n.t('themeSwitchToDark');
+        themeToggleBtn.setAttribute('aria-label', themeToggleBtn.title);
       } else {
         themeIconSun.classList.remove('hidden');
         themeIconMoon.classList.add('hidden');
-        themeToggleBtn.title = I18n.t('themeSwitchToLight');
-        themeToggleBtn.setAttribute('aria-label', I18n.t('themeSwitchToLight'));
+        themeToggleBtn.title = savedTheme === 'system'
+          ? I18n.t('themeSystemTitle', I18n.t('themeDark'))
+          : I18n.t('themeSwitchToLight');
+        themeToggleBtn.setAttribute('aria-label', themeToggleBtn.title);
       }
     }
 
@@ -184,8 +220,11 @@ document.addEventListener('DOMContentLoaded', async () => {
           currentSiteFocusRow.classList.remove('hidden');
           currentSiteFocusToggle.checked = matchedRule.autoFocus;
           currentSiteFocusText.textContent = matchedRule.autoFocus
-            ? I18n.t('focusOptionForegroundShort')
-            : I18n.t('focusOptionBackgroundShort');
+            ? I18n.t('focusModeFocused')
+            : I18n.t('focusModeBackground');
+          currentSiteFocusToggle.title = matchedRule.autoFocus
+            ? I18n.t('focusModeFocused')
+            : I18n.t('focusModeBackground');
         } else {
           currentSiteFocusRow.classList.add('hidden');
         }
@@ -473,6 +512,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (matchedRule) {
       await StorageManager.removeWhitelistDomain(matchedRule.domain);
     } else {
+      const matchedBypass = DomainMatcher.getMatchedBypassRule(activeTabHostname, currentSettings.bypassList);
+      if (matchedBypass) {
+        await StorageManager.removeBypassDomain(matchedBypass.domain);
+      }
       await StorageManager.addWhitelistDomain(activeTabHostname, true);
     }
     await renderUI();
@@ -486,49 +529,55 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (matchedBypass) {
       await StorageManager.removeBypassDomain(matchedBypass.domain);
     } else {
+      const matchedRule = DomainMatcher.getMatchedRule(activeTabHostname, currentSettings.whitelist);
+      if (matchedRule) {
+        await StorageManager.removeWhitelistDomain(matchedRule.domain);
+      }
       await StorageManager.addBypassDomain(activeTabHostname);
     }
     await renderUI();
   });
 
-  // Add Domain Form (Whitelist)
-  addDomainForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    hideWhitelistError();
+  // Add Domain Form (Whitelist) - if present
+  if (addDomainForm) {
+    addDomainForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideWhitelistError();
 
-    const rawInput = domainInput.value.trim();
-    if (!rawInput) {
-      showWhitelistError(I18n.t('errEnterDomain'));
-      return;
-    }
+      const rawInput = domainInput ? domainInput.value.trim() : '';
+      if (!rawInput) {
+        showWhitelistError(I18n.t('errEnterDomain'));
+        return;
+      }
 
-    const normalized = DomainMatcher.normalizeDomain(rawInput);
-    if (!normalized || !DomainMatcher.isValidDomain(normalized)) {
-      showWhitelistError(I18n.t('errInvalidDomain'));
-      return;
-    }
+      const normalized = DomainMatcher.normalizeDomain(rawInput);
+      if (!normalized || !DomainMatcher.isValidDomain(normalized)) {
+        showWhitelistError(I18n.t('errInvalidDomain'));
+        return;
+      }
 
-    const exists = currentSettings.whitelist.some(entry => {
-      const d = typeof entry === 'string' ? entry : entry.domain;
-      return d === normalized;
+      const exists = currentSettings.whitelist.some(entry => {
+        const d = typeof entry === 'string' ? entry : entry.domain;
+        return d === normalized;
+      });
+
+      if (exists) {
+        showWhitelistError(I18n.t('errDomainExists', normalized));
+        return;
+      }
+
+      const autoFocus = popupNewDomainFocus ? popupNewDomainFocus.value === 'true' : true;
+      const result = await StorageManager.addWhitelistDomain(rawInput, autoFocus);
+      if (!result.success) {
+        showWhitelistError(result.error || I18n.t('errInvalidDomain'));
+        return;
+      }
+
+      if (domainInput) domainInput.value = '';
+      hideWhitelistError();
+      await renderUI();
     });
-
-    if (exists) {
-      showWhitelistError(I18n.t('errDomainExists', normalized));
-      return;
-    }
-
-    const autoFocus = popupNewDomainFocus ? popupNewDomainFocus.value === 'true' : true;
-    const result = await StorageManager.addWhitelistDomain(rawInput, autoFocus);
-    if (!result.success) {
-      showWhitelistError(result.error || I18n.t('errInvalidDomain'));
-      return;
-    }
-
-    domainInput.value = '';
-    hideWhitelistError();
-    await renderUI();
-  });
+  }
 
   // Add Bypass Form
   addBypassForm.addEventListener('submit', async (e) => {
@@ -571,7 +620,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Theme Toggle Button
   if (themeToggleBtn) {
     themeToggleBtn.addEventListener('click', async () => {
-      const nextTheme = (currentSettings && currentSettings.theme === 'light') ? 'dark' : 'light';
+      const activeTheme = resolveEffectiveTheme(currentSettings?.theme || 'dark');
+      const nextTheme = activeTheme === 'light' ? 'dark' : 'light';
       document.documentElement.setAttribute('data-theme', nextTheme);
       try {
         localStorage.setItem('maitab_theme', nextTheme);
@@ -582,6 +632,219 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       await StorageManager.saveSettings({ theme: nextTheme });
       await renderUI();
+    });
+  }
+
+  // Theme Select Dropdown
+  if (popupThemeSelect) {
+    popupThemeSelect.addEventListener('change', async () => {
+      const val = popupThemeSelect.value;
+      const selectedTheme = ['system', 'light', 'dark'].includes(val) ? val : 'dark';
+      const effectiveTheme = resolveEffectiveTheme(selectedTheme);
+      document.documentElement.setAttribute('data-theme', effectiveTheme);
+      try {
+        localStorage.setItem('maitab_theme', selectedTheme);
+      } catch (e) {}
+
+      if (currentSettings) {
+        currentSettings.theme = selectedTheme;
+      }
+      await StorageManager.saveSettings({ theme: selectedTheme });
+      await renderUI();
+    });
+  }
+
+  // Real-time OS System theme change listener
+  if (window.matchMedia) {
+    const colorSchemeMedia = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleMediaChange = async () => {
+      const settings = await StorageManager.getSettings();
+      if (settings.theme === 'system') {
+        await renderUI();
+      }
+    };
+    if (typeof colorSchemeMedia.addEventListener === 'function') {
+      colorSchemeMedia.addEventListener('change', handleMediaChange);
+    } else if (typeof colorSchemeMedia.addListener === 'function') {
+      colorSchemeMedia.addListener(handleMediaChange);
+    }
+  }
+
+  // Check for Updates & Synchronization
+  async function triggerUpdateCheck() {
+    if (!checkUpdateBtn) return;
+    checkUpdateBtn.classList.add('is-checking');
+    if (syncStatusBanner) {
+      syncStatusBanner.classList.remove('hidden');
+    }
+    if (syncStatusBadge) {
+      syncStatusBadge.className = 'badge badge-info';
+      syncStatusBadge.textContent = I18n.t('badgeCheckingUpdates');
+    }
+    if (syncStatusMessage) {
+      syncStatusMessage.textContent = I18n.t('statusChecking');
+    }
+    if (syncDetailsBox) syncDetailsBox.classList.add('hidden');
+    if (syncActionArea) syncActionArea.classList.add('hidden');
+
+    try {
+      const result = typeof Updater !== 'undefined'
+        ? await Updater.checkForUpdates()
+        : { success: false, error: 'Updater module not available' };
+
+      checkUpdateBtn.classList.remove('is-checking');
+
+      if (!result.success || result.status === 'UPDATE_FAILED') {
+        if (syncStatusBadge) {
+          syncStatusBadge.className = 'badge badge-danger';
+          syncStatusBadge.textContent = I18n.t('badgeUpdateFailed');
+        }
+        if (syncStatusMessage) {
+          syncStatusMessage.textContent = result.error || I18n.t('statusUpdateFailed');
+        }
+        return;
+      }
+
+      if (result.upToDate || result.status === 'UP_TO_DATE') {
+        if (syncStatusBadge) {
+          syncStatusBadge.className = 'badge badge-success';
+          syncStatusBadge.textContent = I18n.t('badgeUpToDate');
+        }
+        if (syncStatusMessage) {
+          syncStatusMessage.textContent = I18n.t('statusUpToDate');
+        }
+        if (syncDetailsBox) syncDetailsBox.classList.add('hidden');
+        if (syncActionArea) syncActionArea.classList.add('hidden');
+      } else {
+        // Update Available
+        if (syncStatusBadge) {
+          syncStatusBadge.className = 'badge badge-update';
+          syncStatusBadge.textContent = I18n.t('badgeUpdateAvailable');
+        }
+        if (syncStatusMessage) {
+          syncStatusMessage.textContent = I18n.t('statusUpdateAvailable', result.behindCount || 1);
+        }
+
+        if (syncCommitsList && Array.isArray(result.incomingCommits) && result.incomingCommits.length > 0) {
+          syncCommitsList.innerHTML = '';
+          result.incomingCommits.slice(0, 5).forEach(c => {
+            const li = document.createElement('li');
+            li.textContent = `• ${c}`;
+            syncCommitsList.appendChild(li);
+          });
+          if (syncDetailsBox) syncDetailsBox.classList.remove('hidden');
+          if (syncConflictBox) syncConflictBox.classList.add('hidden');
+        }
+
+        if (syncActionArea) syncActionArea.classList.remove('hidden');
+        if (syncNowBtn) {
+          syncNowBtn.classList.remove('hidden');
+          syncNowBtn.disabled = false;
+        }
+        if (copySyncCmdBtn) copySyncCmdBtn.classList.add('hidden');
+      }
+    } catch (err) {
+      checkUpdateBtn.classList.remove('is-checking');
+      if (syncStatusBadge) {
+        syncStatusBadge.className = 'badge badge-danger';
+        syncStatusBadge.textContent = I18n.t('badgeUpdateFailed');
+      }
+      if (syncStatusMessage) {
+        syncStatusMessage.textContent = err.message || I18n.t('statusUpdateFailed');
+      }
+    }
+  }
+
+  async function triggerManualSync() {
+    if (!syncNowBtn) return;
+    syncNowBtn.disabled = true;
+    if (syncStatusBadge) {
+      syncStatusBadge.className = 'badge badge-info';
+      syncStatusBadge.textContent = I18n.t('badgeSynchronizing');
+    }
+    if (syncStatusMessage) {
+      syncStatusMessage.textContent = I18n.t('statusSynchronizing');
+    }
+
+    try {
+      const result = typeof Updater !== 'undefined'
+        ? await Updater.performSync()
+        : { success: false, error: 'Updater module not available' };
+
+      syncNowBtn.disabled = false;
+
+      if (result.success) {
+        if (syncStatusBadge) {
+          syncStatusBadge.className = 'badge badge-success';
+          syncStatusBadge.textContent = I18n.t('badgeUpToDate');
+        }
+        if (syncStatusMessage) {
+          syncStatusMessage.textContent = I18n.t('statusSyncSuccess');
+        }
+        if (syncDetailsBox) syncDetailsBox.classList.add('hidden');
+        if (syncActionArea) syncActionArea.classList.add('hidden');
+
+        // Re-check update status after short delay to refresh all state
+        setTimeout(() => triggerUpdateCheck(), 1200);
+      } else if (result.requiresLocalExecution) {
+        if (syncStatusBadge) {
+          syncStatusBadge.className = 'badge badge-update';
+          syncStatusBadge.textContent = I18n.t('badgeUpdateAvailable');
+        }
+        if (syncStatusMessage) {
+          syncStatusMessage.textContent = I18n.t('syncLocalInstruction');
+        }
+        if (copySyncCmdBtn) copySyncCmdBtn.classList.remove('hidden');
+        if (syncNowBtn) syncNowBtn.classList.add('hidden');
+      } else {
+        if (syncStatusBadge) {
+          syncStatusBadge.className = 'badge badge-danger';
+          syncStatusBadge.textContent = I18n.t('badgeUpdateFailed');
+        }
+        if (syncStatusMessage) {
+          syncStatusMessage.textContent = result.error || I18n.t('statusUpdateFailed');
+        }
+        if (result.conflict && syncConflictBox) {
+          syncConflictBox.textContent = result.feedback || result.error || 'Conflict detected during synchronization.';
+          syncConflictBox.classList.remove('hidden');
+          if (syncDetailsBox) syncDetailsBox.classList.remove('hidden');
+        }
+      }
+    } catch (err) {
+      syncNowBtn.disabled = false;
+      if (syncStatusBadge) {
+        syncStatusBadge.className = 'badge badge-danger';
+        syncStatusBadge.textContent = I18n.t('badgeUpdateFailed');
+      }
+      if (syncStatusMessage) {
+        syncStatusMessage.textContent = err.message || I18n.t('statusUpdateFailed');
+      }
+    }
+  }
+
+  if (checkUpdateBtn) {
+    checkUpdateBtn.addEventListener('click', triggerUpdateCheck);
+  }
+
+  if (syncNowBtn) {
+    syncNowBtn.addEventListener('click', triggerManualSync);
+  }
+
+  if (dismissSyncBtn) {
+    dismissSyncBtn.addEventListener('click', () => {
+      if (syncStatusBanner) syncStatusBanner.classList.add('hidden');
+    });
+  }
+
+  if (copySyncCmdBtn) {
+    copySyncCmdBtn.addEventListener('click', () => {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText('npm run sync').catch(() => {});
+      }
+      copySyncCmdBtn.textContent = I18n.t('copiedToClipboard');
+      setTimeout(() => {
+        copySyncCmdBtn.textContent = I18n.t('btnCopySyncCmd');
+      }, 2000);
     });
   }
 
