@@ -14,8 +14,8 @@
   return {
     version: '1.31',
     fullVersion: '1.31.0',
-    commit: 'd0b3c49',
-    fullCommit: 'd0b3c4907ce7dd9f37c127c5e39a0dbd37af53a4',
+    commit: '8bbafc8',
+    fullCommit: '8bbafc806ac0e6ae687f7d115b96a4fc4b9a1d57',
     branch: 'main',
     repository: 'Melony-mai/MaiTab',
     repoUrl: 'https://github.com/Melony-mai/MaiTab',
