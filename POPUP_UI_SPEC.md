@@ -539,6 +539,7 @@ select.lang-select option {
   transition: all 0.15s ease;
   user-select: none;
   outline: none;
+  white-space: nowrap;
 }
 
 .btn-secondary {

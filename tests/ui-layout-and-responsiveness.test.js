@@ -269,6 +269,56 @@ test('UI Specification and Responsive Compatibility', async (t) => {
     assert.strictEqual(whitelistActive.whitelistBtnActive, true, 'Whitelist tab button should be active');
   });
 
+  await t.test('Button text rendering and single-line layout conformity across languages (en, ja, zh-CN) and display scales', async () => {
+    await session.navigate('/popup/popup.html');
+    await session.evaluate(`document.getElementById('tabBtnBypass').click()`);
+
+    for (const lang of ['en', 'ja', 'zh-CN']) {
+      for (const scale of [1.0, 1.25, 1.5, 2.0]) {
+        await session.setViewport(368, 600, scale);
+        await session.evaluate(`(function(l) {
+          const sel = document.getElementById('langSelect');
+          sel.value = l;
+          sel.dispatchEvent(new Event('change'));
+        })('${lang}')`);
+        await new Promise(r => setTimeout(r, 100));
+
+        const btnState = await session.evaluate(`(() => {
+          const btn = document.getElementById('addBypassBtn');
+          const range = document.createRange();
+          range.selectNodeContents(btn);
+          const rects = Array.from(range.getClientRects());
+          const style = window.getComputedStyle(btn);
+          return {
+            text: btn.textContent.trim(),
+            lineCount: rects.length,
+            whiteSpace: style.whiteSpace,
+            flexShrink: style.flexShrink,
+            scrollHeight: btn.scrollHeight,
+            clientHeight: btn.clientHeight,
+            overflowsVertically: btn.scrollHeight > btn.clientHeight
+          };
+        })()`);
+
+        assert.strictEqual(
+          btnState.whiteSpace,
+          'nowrap',
+          `Button must have white-space: nowrap in ${lang} at ${scale}x`
+        );
+        assert.strictEqual(
+          btnState.lineCount,
+          1,
+          `Button text "${btnState.text}" must not wrap across multiple lines in ${lang} at ${scale}x (got ${btnState.lineCount} lines)`
+        );
+        assert.strictEqual(
+          btnState.overflowsVertically,
+          false,
+          `Button text must fit vertically without overflow in ${lang} at ${scale}x`
+        );
+      }
+    }
+  });
+
   await t.test('Options page responsive layout and cross-viewport compatibility', async () => {
     const viewports = [
       { name: '1080p Desktop', width: 1920, height: 1080 },

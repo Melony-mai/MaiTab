@@ -814,6 +814,7 @@ input:disabled + .slider {
   user-select: none;
   outline: none;
   border: none;
+  white-space: nowrap;
 }
 
 .btn-secondary {
@@ -955,6 +956,7 @@ input:disabled + .slider {
   cursor: pointer;
   transition: all 0.15s ease;
   user-select: none;
+  white-space: nowrap;
 }
 
 .tab-nav-btn:hover,
@@ -1001,6 +1003,7 @@ input:disabled + .slider {
   text-decoration: none;
   font-weight: 500;
   transition: color 0.15s ease;
+  white-space: nowrap;
 }
 
 .link-btn:hover {
@@ -1031,6 +1034,17 @@ input:disabled + .slider {
   display: flex;
   gap: 6px;
   align-items: center;
+}
+
+.input-group .input-text,
+.input-group .mac-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.input-group .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .select-focus-sm {
@@ -1199,6 +1213,8 @@ input:disabled + .slider {
   text-decoration: none;
   font-weight: 500;
   transition: color 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .footer-link:hover {

@@ -579,6 +579,17 @@ input:disabled + .slider {
   align-items: center;
 }
 
+.add-domain-row .input-text,
+.add-domain-row .mac-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.add-domain-row .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .focus-select-wrap {
   flex-shrink: 0;
 }
