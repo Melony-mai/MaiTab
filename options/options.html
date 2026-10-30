@@ -11,9 +11,12 @@
     <!-- Header -->
     <header class="page-header">
       <div class="brand">
-        <img src="../MaiTab.png" alt="MaiTab" class="brand-icon">
-        <div>
-          <h1 class="brand-title" data-i18n="optTitle">MaiTab Settings</h1>
+        <img src="../icons/icon48.png" alt="MaiTab" class="brand-icon" width="40" height="40">
+        <div class="brand-text-block">
+          <div class="brand-title-wrap">
+            <h1 class="brand-title" data-i18n="optTitle">MaiTab Settings</h1>
+            <span class="badge" data-i18n="brandVersion">v1.2</span>
+          </div>
           <p class="brand-subtitle" data-i18n="optSubtitle">Configure link opening and tab switching behaviors</p>
         </div>
       </div>
@@ -43,7 +46,7 @@
           </div>
           <label class="switch">
             <input type="checkbox" id="optMasterEnabled" checked>
-            <span class="slider round"></span>
+            <span class="slider"></span>
           </label>
         </div>
 
@@ -63,7 +66,7 @@
           </div>
           <label class="switch">
             <input type="checkbox" id="optAutoSwitch">
-            <span class="slider round"></span>
+            <span class="slider"></span>
           </label>
         </div>
 
@@ -77,7 +80,7 @@
           </div>
           <label class="switch">
             <input type="checkbox" id="optOpenNext" checked>
-            <span class="slider round"></span>
+            <span class="slider"></span>
           </label>
         </div>
       </section>
@@ -99,14 +102,14 @@
           <input
             type="text"
             id="optDomainInput"
-            class="input-text"
+            class="input-text mac-input"
             data-i18n-placeholder="inputPlaceholderDomain"
             placeholder="e.g. github.com, news.ycombinator.com, or *.reddit.com"
             autocomplete="off"
             spellcheck="false"
           >
           <div class="focus-select-wrap">
-            <select id="optNewDomainFocus" class="select-focus" aria-label="Tab Focus Option">
+            <select id="optNewDomainFocus" class="select-focus lang-select" aria-label="Tab Focus Option">
               <option value="true" data-i18n="focusOptionForeground">Foreground (Focus ON)</option>
               <option value="false" data-i18n="focusOptionBackground">Background (Focus OFF)</option>
             </select>
@@ -120,7 +123,7 @@
           <input
             type="text"
             id="optSearchInput"
-            class="input-text input-search"
+            class="input-text mac-input input-search"
             data-i18n-placeholder="filterPlaceholder"
             placeholder="Filter whitelist domains..."
           >
@@ -169,7 +172,7 @@
           <input
             type="text"
             id="optBypassDomainInput"
-            class="input-text"
+            class="input-text mac-input"
             data-i18n-placeholder="inputPlaceholderBypass"
             placeholder="e.g. google.com or internal.corp"
             autocomplete="off"
@@ -184,7 +187,7 @@
           <input
             type="text"
             id="optBypassSearchInput"
-            class="input-text input-search"
+            class="input-text mac-input input-search"
             data-i18n-placeholder="filterBypassPlaceholder"
             placeholder="Filter bypass domains..."
           >
@@ -216,7 +219,7 @@
         </div>
       </section>
 
-      <!-- Section 4: Interactive Domain Matching Tester -->
+      <!-- Section 4: Interactive Domain Match Tester -->
       <section class="card">
         <h2 class="card-title" data-i18n="testerTitle">Interactive Domain Match Tester</h2>
         <p class="card-subtitle" data-i18n="testerSubtitle">
@@ -227,7 +230,7 @@
           <input
             type="text"
             id="testerInput"
-            class="input-text"
+            class="input-text mac-input"
             data-i18n-placeholder="testerPlaceholder"
             placeholder="Type a URL or domain to test, e.g. https://gist.github.com/my-gist"
           >

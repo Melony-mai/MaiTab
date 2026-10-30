@@ -1,12 +1,27 @@
-# MaiTab - Smart Tab Manager for Google Chrome (v1.1)
+# MaiTab - Smart Tab Manager for Google Chrome (v1.2)
 
-**MaiTab** is a lightweight, zero-dependency Google Chrome extension built strictly on **Manifest V3**. It enhances link-clicking behavior by opening left-clicked links in new tabs without interrupting your browsing flow on the current page. It features a **Complete Bypass List (Silent List)** with top precedence, a configurable **Global Focus Toggle**, a subdomain-aware **Website Whitelist with Independent Per-Website Focus Options**, and comprehensive multilingual support for **English**, **Chinese (Simplified)**, and **Japanese**.
+**MaiTab** is a lightweight, zero-dependency Google Chrome extension built strictly on **Manifest V3**. It enhances link-clicking behavior by opening left-clicked links in new tabs without interrupting your browsing flow on the current page. It features an authentic **macOS Dark Aqua / Apple System Settings** UI redesign, a **Complete Bypass List (Silent List)** with top precedence, a configurable **Global Focus Toggle**, a subdomain-aware **Website Whitelist with Independent Per-Website Focus Options**, and comprehensive multilingual support for **English**, **Chinese (Simplified)**, and **Japanese**.
+
+---
+
+## What's New in v1.2
+
+- **macOS Dark Aqua / Apple System Settings UI Design:**
+  - Complete redesign of both the **Popup Settings Interface** and **Advanced Settings Interface (Options)** following `POPUP_UI_SPEC.md`.
+  - **Inset Grouped Architecture:** Options are cleanly categorized into rounded, translucent cards (`rgba(255, 255, 255, 0.05)`) over a deep neutral window background (`#1c1c1e`).
+  - **Apple System Controls:** Custom controls with native Apple bounce easing (`cubic-bezier(0.4, 0, 0.2, 1)`), tactile push-button compression (`scale(0.985)`), hairline dividing strokes, and neon-blue focus rings.
+  - **Native Dark Select Menus:** Embedded SVG chevron dropdowns with dark option styling.
+  - **Custom macOS Overlay Scrollbar:** Non-intrusive 6px overlay scrollbars across Windows, macOS, and Linux.
+- **Responsive Layout & Resolution Scaling:**
+  - Pixel-perfect, zero horizontal overflow across 100% (1080p), 125%, 150%, 200% (macOS Retina), and 4K HiDPI displays.
+  - Fluid responsive layout in Advanced Settings for viewports ranging from 375px mobile to full-width desktop monitors.
+- **Version bump to v1.2** across `manifest.json`, `package.json`, localization dictionaries, and interface headers.
 
 ---
 
 ## Key Features
 
-1. **Complete Bypass List (Silent List) [New in v1.1]**
+1. **Complete Bypass List (Silent List)**
    - Allows you to specify websites on which MaiTab must be **completely inactive**.
    - **Absolute Precedence:** The Complete Bypass List takes priority over all other extension settings. If a website matches an entry in this list, the extension leaves its link behavior entirely unchanged, regardless of the global focus toggle or any whitelist configuration.
    - **Native Browser Behavior:** All links and interactive elements behave exactly as they would in Chrome without this extension installed (following native site routing, same-tab navigation, or site-defined `target="_blank"`).
@@ -39,7 +54,7 @@
      - **Focus Disabled (Background):** Links clicked on that website open in a new background tab without switching away, even when the Global Focus Toggle is ON.
    - **Subdomain-Aware Domain Matching:** Whitelisting `example.com` automatically covers `news.example.com` and `sub.example.com`, while avoiding false positives like `fakeexample.com` or `example.com.evil.org`.
    - **Instant Persistence & Application:** Changes apply immediately without requiring page reloads and persist across browser restarts.
-   - **One-Click Whitelisting & In-Popup Toggle:** The popup detects the current website's domain, provides a "+ Whitelist" / "✓ Whitelisted" button, and displays an inline focus toggle for instant adjustment.
+   - **One-Click Whitelisting & In-Popup Toggle:** The popup detects the current website's domain, provides a "+ Whitelist" / "Whitelisted" button, and displays an inline focus toggle for instant adjustment.
 
 5. **Full Multilingual Support (i18n)**
    - Complete localization across **English (en)**, **Chinese Simplified (zh-CN)**, and **Japanese (ja)**.
@@ -122,9 +137,9 @@ Click the MaiTab icon in the Chrome toolbar:
 - **Language Selector (Top Bar):** Switch dynamically between English, 简体中文, and 日本語.
 - **Master Switch (Top Right):** Instantly enable or pause link interception without uninstalling.
 - **Current Website Card:**
-  - View the active tab's hostname and status badge (`Bypassed (Silent)`, `Foreground`, `Foreground (Whitelisted)`, `Background (Whitelisted)`, or `Background`).
-  - **+ Whitelist / ✓ Whitelisted:** Quickly add or remove the active site from the tab-switching whitelist.
-  - **+ Bypass / ✓ Bypassed:** Quickly add or remove the active site from the Complete Bypass List.
+  - View the active tab's hostname and status badge (`Bypassed`, `Foreground`, `Foreground (Whitelisted)`, `Background (Whitelisted)`, or `Background`).
+  - **+ Whitelist / Whitelisted:** Quickly add or remove the active site from the tab-switching whitelist.
+  - **+ Bypass / Bypassed:** Quickly add or remove the active site from the Complete Bypass List.
   - When whitelisted and not bypassed, an inline **Tab Focus** switch allows toggling foreground vs. background opening directly for that site.
 - **Global Tab Focus Toggle:** Toggle global foreground vs. background tab opening for unlisted websites.
 - **Lists Segmented Navigation:**
@@ -145,7 +160,7 @@ Right-click the extension icon and select **Options**, or click **Options ↗** 
 
 ```text
 MaiTab/
-├── manifest.json                     # Chrome Manifest V3 configuration (v1.1)
+├── manifest.json                     # Chrome Manifest V3 configuration (v1.2)
 ├── _locales/                         # Standard Chrome extension locale messages
 │   ├── en/messages.json              # English extension metadata
 │   ├── zh_CN/messages.json           # Chinese (Simplified) metadata
@@ -155,17 +170,17 @@ MaiTab/
 ├── content/
 │   └── content.js                    # Content script for link click interception & listener lifecycle
 ├── common/
-│   ├── i18n.js                       # Centralized multilingual localization engine
+│   ├── i18n.js                       # Centralized multilingual localization engine (v1.2)
 │   ├── domain-matcher.js             # Domain normalization, whitelist & bypass matching logic
 │   ├── link-evaluator.js             # Click qualification, anchor safety, and bypass checks
 │   └── storage.js                    # Storage persistence for settings, whitelist & bypass list
 ├── popup/
-│   ├── popup.html                    # Extension popup layout with tabbed list views
-│   ├── popup.css                     # Modern, responsive popup styling
+│   ├── popup.html                    # Extension popup layout with macOS Dark Aqua architecture
+│   ├── popup.css                     # macOS Dark Aqua System Settings styling (Sonoma/Ventura)
 │   └── popup.js                      # Popup controller with whitelist & bypass management
 ├── options/
-│   ├── options.html                  # Full-page options with dedicated bypass list & domain tester
-│   ├── options.css                   # Options page styles
+│   ├── options.html                  # Options page with responsive macOS Dark Aqua layout
+│   ├── options.css                   # Options page styles matching macOS design tokens
 │   └── options.js                    # Options page controller with import/export & simulation
 ├── icons/
 │   ├── icon16.png                    # Extension icon (16x16)
@@ -178,10 +193,12 @@ MaiTab/
 │   ├── domain-matcher.test.js        # Domain normalization, whitelist, bypass & precedence tests
 │   ├── link-interceptor.test.js      # Click interception, safety edge cases & bypass tests
 │   ├── storage.test.js               # Storage persistence, CRUD & bypass list tests
-│   └── manifest-and-integration.test.js # Manifest V3, 6-scenario verification & E2E simulation
+│   ├── manifest-and-integration.test.js # Manifest V3, 6-scenario verification & E2E simulation
+│   └── ui-layout-and-responsiveness.test.js # Real headless Chrome CDP layout & viewport tests
 ├── MaiTab.png                        # Master brand icon asset (512x512)
-├── package.json                      # Project metadata (v1.1.0) and test runner script
-└── README.md                         # Technical documentation
+├── package.json                      # Project metadata (v1.2.0) and test runner script
+├── POPUP_UI_SPEC.md                  # Primary UI design specification reference
+└── README.md                         # Technical documentation (v1.2)
 ```
 
 ---
@@ -202,7 +219,8 @@ The test suite validates:
 3. **Global Settings Fallback:** Websites not included in either list follow the global settings.
 4. **Precedence Hierarchy:** Complete Bypass List strictly takes precedence when a website matches both lists.
 5. **Persistence Across Restarts:** Settings, whitelist, and bypass list persist across simulated browser restarts.
-6. **Manifest V3 Structure:** Schema compliance, version 1.1 consistency, permissions, icon files, and localization.
+6. **Manifest V3 Structure:** Schema compliance, version 1.2 consistency, permissions, icon files, and localization.
+7. **UI Layout & Responsiveness:** Verified via real headless Chrome DevTools Protocol (CDP) across multiple viewports and display scale factors (100%, 125%, 150%, 200%).
 
 ---
 
