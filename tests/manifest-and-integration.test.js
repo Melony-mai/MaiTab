@@ -19,7 +19,7 @@ test('Manifest V3 validation', async (t) => {
   await t.test('conforms to Manifest V3 structure', () => {
     assert.strictEqual(manifest.manifest_version, 3, 'manifest_version must be 3');
     assert.ok(manifest.name, 'manifest must have a name');
-    assert.strictEqual(manifest.version, '1.3', 'manifest version must be 1.3');
+    assert.strictEqual(manifest.version, '1.31', 'manifest version must be 1.31');
     assert.ok(manifest.description, 'manifest must have a description');
     assert.strictEqual(manifest.default_locale, 'en', 'manifest default_locale must be en');
   });

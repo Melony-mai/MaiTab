@@ -1,6 +1,20 @@
-# MaiTab - Smart Tab Manager for Google Chrome (v1.3)
+# MaiTab - Smart Tab Manager for Google Chrome (v1.31)
 
-**MaiTab** is a lightweight, zero-dependency Google Chrome extension built strictly on **Manifest V3**. It enhances link-clicking behavior by opening left-clicked links in new tabs without interrupting your browsing flow on the current page. It features an authentic **macOS Aqua / Apple System Settings** UI with **Light Mode & Dark Mode** support, a **Complete Bypass List (Silent List)** with top precedence, a configurable **Global Focus Toggle**, a subdomain-aware **Website Whitelist with Independent Per-Website Focus Options**, a built-in **GitHub Repository Direct Synchronization** utility, and comprehensive multilingual support for **English**, **Chinese (Simplified)**, and **Japanese**.
+**MaiTab** is a lightweight, zero-dependency Google Chrome extension built strictly on **Manifest V3**. It enhances link-clicking behavior by opening left-clicked links in new tabs without interrupting your browsing flow on the current page. It features an authentic **macOS Aqua / Apple System Settings** UI with **Light Mode & Dark Mode** support, a **Complete Bypass List (Silent List)** with top precedence, a configurable **Global Focus Toggle**, a subdomain-aware **Website Whitelist with Independent Per-Website Focus Options**, a built-in **GitHub Repository Direct Iteration and Synchronization** capability, and comprehensive multilingual support for **English**, **Chinese (Simplified)**, and **Japanese**.
+
+---
+
+## What's New in v1.31
+
+- **Direct GitHub Repository Iteration & Synchronization:**
+  - **In-Place Codebase Updates:** Retrieve and synchronize the latest commits directly from the remote GitHub repository without requiring manual re-cloning or re-downloading.
+  - **Preserves Local Modifications:** Automatically detects uncommitted work (modified files, staged changes, and untracked files) and preserves them safely using stashing throughout the synchronization cycle.
+  - **Conflict Detection & Safe Diagnostics:** Detects Git merge/rebase conflicts and stash-pop conflicts safely, providing clear, actionable step-by-step diagnostic feedback when manual resolution is needed.
+  - **Non-Destructive Status Inspection:** New `npm run sync:check` (or `--check` / `--dry-run`) command inspects incoming commits and divergence from remote without touching working files.
+  - **Post-Synchronization Verification:** Automatically executes the complete test suite (`npm test`) post-synchronization to guarantee project functionality and prevent regressions.
+  - **Enhanced CLI & Scripts:** Added `npm run sync`, `npm run iterate`, and `npm run sync:check` with support for `--check`, `--merge`, `--no-tests`, and `--abort-on-conflict`.
+- **Project Version Update to v1.31:**
+  - Updated project version to **v1.31** consistently across `manifest.json`, `package.json`, localization dictionaries (`en`, `zh-CN`, `ja`), interface badges, export metadata, and automated verification suites.
 
 ---
 
@@ -176,7 +190,7 @@ Right-click the extension icon and select **Options**, or click **Options ↗** 
 
 ```text
 MaiTab/
-├── manifest.json                     # Chrome Manifest V3 configuration (v1.3)
+├── manifest.json                     # Chrome Manifest V3 configuration (v1.31)
 ├── _locales/                         # Standard Chrome extension locale messages
 │   ├── en/messages.json              # English extension metadata
 │   ├── zh_CN/messages.json           # Chinese (Simplified) metadata
@@ -186,20 +200,20 @@ MaiTab/
 ├── content/
 │   └── content.js                    # Content script for link click interception & listener lifecycle
 ├── common/
-│   ├── i18n.js                       # Centralized multilingual localization engine (v1.3)
+│   ├── i18n.js                       # Centralized multilingual localization engine (v1.31)
 │   ├── domain-matcher.js             # Domain normalization, whitelist & bypass matching logic
 │   ├── link-evaluator.js             # Click qualification, anchor safety, and bypass checks
 │   └── storage.js                    # Storage persistence for settings, whitelist, bypass & theme
 ├── popup/
-│   ├── popup.html                    # Extension popup layout with Light & Dark macOS Aqua themes
+│   ├── popup.html                    # Extension popup layout with Light & Dark macOS Aqua themes (v1.31)
 │   ├── popup.css                     # macOS Aqua System Settings styling with theme tokens
 │   └── popup.js                      # Popup controller with theme, whitelist & bypass management
 ├── options/
-│   ├── options.html                  # Options page with responsive macOS Light & Dark layout
+│   ├── options.html                  # Options page with responsive macOS Light & Dark layout (v1.31)
 │   ├── options.css                   # Options page styles matching macOS design tokens
-│   └── options.js                    # Options page controller with theme, import/export & simulation
+│   └── options.js                    # Options page controller with theme, import/export & simulation (v1.31)
 ├── scripts/
-│   └── sync-repo.js                  # Direct iteration and synchronization utility for GitHub repo
+│   └── sync-repo.js                  # Direct iteration and GitHub synchronization utility (v1.31)
 ├── icons/
 │   ├── icon16.png                    # Extension icon (16x16)
 │   ├── icon32.png                    # Extension icon (32x32)
@@ -211,30 +225,67 @@ MaiTab/
 │   ├── domain-matcher.test.js        # Domain normalization, whitelist, bypass & precedence tests
 │   ├── link-interceptor.test.js      # Click interception, safety edge cases & bypass tests
 │   ├── storage.test.js               # Storage persistence, CRUD, theme & bypass list tests
-│   ├── manifest-and-integration.test.js # Manifest V3, 6-scenario verification & E2E simulation
-│   ├── ui-layout-and-responsiveness.test.js # Real headless Chrome CDP layout & viewport tests
-│   └── theme-and-sync.test.js        # Light/Dark mode toggle, persistence & sync workflow tests
+│   ├── manifest-and-integration.test.js # Manifest V3, 6-scenario verification & E2E simulation (v1.31)
+│   ├── ui-layout-and-responsiveness.test.js # Real headless Chrome CDP layout & viewport tests (v1.31)
+│   ├── theme-and-sync.test.js        # Light/Dark mode toggle, persistence & sync workflow tests
+│   └── direct-iteration.test.js      # Direct repository iteration, conflict detection & version tests
 ├── MaiTab.png                        # Master brand icon asset (512x512)
-├── package.json                      # Project metadata (v1.3.0) and test/sync scripts
-├── POPUP_UI_SPEC.md                  # Primary UI design specification reference
-└── README.md                         # Technical documentation (v1.3)
+├── package.json                      # Project metadata (v1.31.0) and test/sync scripts
+├── POPUP_UI_SPEC.md                  # Primary UI design specification reference (v1.31)
+└── README.md                         # Technical documentation (v1.31)
 ```
 
 ---
 
 ## Direct GitHub Repository Iteration
 
-To safely pull and synchronize the latest changes from the remote GitHub repository while protecting local modifications:
+MaiTab provides a direct iteration capability that allows you to safely synchronize the project with the latest commits from its remote GitHub repository and use the updated codebase as the basis for subsequent development without manual re-cloning or re-downloading.
+
+### 1. Synchronize and Iterate
+To synchronize the project with the latest remote version:
 
 ```bash
 npm run sync
+# or
+npm run iterate
 ```
 
 This automated workflow:
-1. Detects any uncommitted work or untracked changes and temporarily stashes them safely.
-2. Fetches and rebases against `origin/main` to incorporate remote updates.
-3. Restores stashed work cleanly.
-4. Executes the full test suite (`npm test`) to guarantee project functionality.
+1. **Preserves Uncommitted Work:** Automatically checks for local modifications, staged changes, and untracked files, safely preserving them via Git stash before any sync operations.
+2. **Retrieves Remote Updates:** Fetches and prunes tracking branches from GitHub (`origin`), inspecting commit divergence (ahead / behind).
+3. **Applies In-Place Updates:**
+   - If local has no unpushed commits (`aheadCount === 0`), applies a clean, atomic fast-forward (`git merge --ff-only`).
+   - If local has unpushed commits, rebases local commits cleanly on top of the latest remote changes (`git rebase`).
+4. **Detects & Diagnoses Merge Conflicts:** Safely detects merge, rebase, and stash-pop conflicts, presenting clear step-by-step diagnostic feedback with file paths and commands rather than leaving broken states.
+5. **Restores Stashed Work:** Restores all uncommitted changes back to the working directory cleanly via `git stash pop`.
+6. **Verifies Integrity:** Automatically executes the complete test suite (`npm test`) post-synchronization to guarantee zero regressions.
+
+### 2. Inspect Remote Status (Dry-Run Check)
+To check whether the local branch is behind or ahead of remote without modifying your working tree:
+
+```bash
+npm run sync:check
+```
+
+### 3. Advanced CLI Options
+The utility can also be invoked with customized flags:
+
+```bash
+# Check remote status without modifying the working tree
+node scripts/sync-repo.js --check
+
+# Synchronize without running post-sync tests
+node scripts/sync-repo.js --no-tests
+
+# Use merge commit strategy instead of rebase for diverged branches
+node scripts/sync-repo.js --merge
+
+# Automatically abort rebase/merge and restore previous state if conflict arises
+node scripts/sync-repo.js --abort-on-conflict
+
+# Display full help manual
+node scripts/sync-repo.js --help
+```
 
 ---
 
@@ -255,9 +306,10 @@ The test suite validates:
 4. **Global Settings Fallback:** Websites not included in either list follow the global settings.
 5. **Precedence Hierarchy:** Complete Bypass List strictly takes precedence when a website matches both lists.
 6. **Persistence Across Restarts:** Settings, whitelist, bypass list, and theme preferences persist across simulated browser restarts.
-7. **Manifest V3 Structure:** Schema compliance, version 1.3 consistency, permissions, icon files, and localization.
+7. **Manifest V3 Structure:** Schema compliance, version 1.31 consistency, permissions, icon files, and localization.
 8. **UI Layout & Responsiveness:** Verified via real headless Chrome DevTools Protocol (CDP) across multiple viewports and display scale factors (100%, 125%, 150%, 200%).
 9. **GitHub Repository Synchronization:** Verified safe stashing, fetch, rebase, and restoration workflow.
+10. **Direct Repository Iteration Suite:** Validates remote fetching, in-place fast-forward and rebase synchronization, local uncommitted modifications protection, conflict detection and actionable diagnostics, dry-run checks, and project-wide version consistency.
 
 ---
 

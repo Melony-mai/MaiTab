@@ -552,7 +552,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const list = currentSettings.whitelist || [];
     const exportData = {
       app: 'MaiTab',
-      version: '1.3',
+      version: '1.31',
       exportedAt: new Date().toISOString(),
       whitelist: list
     };
@@ -571,7 +571,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const list = currentSettings.bypassList || [];
     const exportData = {
       app: 'MaiTab',
-      version: '1.3',
+      version: '1.31',
       exportedAt: new Date().toISOString(),
       bypassList: list
     };
