@@ -1,6 +1,35 @@
 # MaiTab - Smart Tab Manager for Google Chrome (v1.31)
 
-**MaiTab** is a lightweight, zero-dependency Google Chrome extension built strictly on **Manifest V3**. It enhances link-clicking behavior by opening left-clicked links in new tabs without interrupting your browsing flow on the current page. It features an authentic **macOS Aqua / Apple System Settings** UI with **Light Mode & Dark Mode** support, a **Complete Bypass List (Silent List)** with top precedence, a configurable **Global Focus Toggle**, a subdomain-aware **Website Whitelist with Independent Per-Website Focus Options**, a built-in **GitHub Repository Direct Iteration and Synchronization** capability, and comprehensive multilingual support for **English**, **Chinese (Simplified)**, and **Japanese**.
+<p align="center">
+  <strong>English</strong> | <a href="README_zh-CN.md">简体中文</a> | <a href="README_ja.md">日本語</a>
+</p>
+
+---
+
+**MaiTab** is a lightweight, zero-dependency Google Chrome extension built strictly on **Manifest V3**. It enhances link-clicking behavior by opening left-clicked links in new tabs without interrupting your browsing flow on the current page. It features an authentic **macOS Aqua / Apple System Settings** UI with **Light Mode & Dark Mode** support, real-time **System Theme Tracking**, a **Complete Bypass List (Silent List)** with top precedence, a configurable **Global Focus Toggle**, a subdomain-aware **Website Whitelist with Independent Per-Website Focus Options**, built-in **GitHub Repository Direct Iteration and In-Popup Synchronization**, and comprehensive multilingual support for **English**, **Simplified Chinese**, and **Japanese**.
+
+---
+
+## Table of Contents
+
+- [What's New in v1.31](#whats-new-in-v131)
+- [What's New in v1.3](#whats-new-in-v131)
+- [What's New in v1.2](#whats-new-in-v12)
+- [Key Features](#key-features)
+- [Behavior Decision Matrix & Setting Precedence](#behavior-decision-matrix-setting-precedence)
+- [Installation (Load Unpacked)](#installation-load-unpacked)
+- [Configuration & Usage](#configuration-usage)
+  - [1. Extension Popup](#1-extension-popup)
+  - [2. Options Page (Advanced Settings)](#2-options-page-advanced-settings)
+- [Dependencies & Environment Requirements](#dependencies-environment-requirements)
+- [Troubleshooting & FAQ](#troubleshooting-faq)
+- [Manual Update Checking & Synchronization](#manual-update-checking-synchronization)
+- [Theme Modes: System, Light, and Dark](#theme-modes-system-light-and-dark)
+- [Direct GitHub Repository Iteration & CLI Scripts](#direct-github-repository-iteration-cli-scripts)
+- [Automated Testing & Verification](#automated-testing-verification)
+- [Project Structure](#project-structure)
+- [Technical Details & Permissions](#technical-details-permissions)
+- [License](#license)
 
 ---
 
@@ -77,7 +106,7 @@
    - **Native Browser Behavior:** All links and interactive elements behave exactly as they would in Chrome without this extension installed (following native site routing, same-tab navigation, or site-defined `target="_blank"`).
    - **Zero Interference & Clean Event Handling:** Event listeners (`mousedown`, `mousemove`, `mouseup`, `click`) are detached on bypassed websites to ensure no unnecessary event handlers or performance overhead interfere with web applications.
    - **Independent Management:** Managed completely independently from the regular whitelist, with dedicated controls in both the popup and options page.
-   - **Persistent & Subdomain-Aware:** Entries persist reliably across browser restarts via `chrome.storage.sync` (with local fallback) and automatically cover subdomains (e.g. bypassing `google.com` also covers `mail.google.com` and `docs.google.com`).
+   - **Persistent & Subdomain-Aware:** Entries persist reliably across browser restarts via `chrome.storage.sync` (with local fallback) and automatically cover subdomains (e.g., bypassing `google.com` also covers `mail.google.com` and `docs.google.com`).
 
 2. **Open Links in New Tabs by Default**
    - Left-clicking webpage links on active sites automatically opens the destination in a new tab without navigating away from your active page.
@@ -107,7 +136,7 @@
    - **One-Click Whitelisting & In-Popup Toggle:** The popup detects the current website's domain, provides a "+ Whitelist" / "Whitelisted" button, and displays an inline focus toggle for instant adjustment.
 
 5. **Full Multilingual Support (i18n)**
-   - Complete localization across **English (en)**, **Chinese Simplified (zh-CN)**, and **Japanese (ja)**.
+   - Complete localization across **English (en)**, **Simplified Chinese (zh-CN)**, and **Japanese (ja)**.
    - Covers all user-facing interfaces: popup tabs, options page, buttons, badges, descriptions, tooltips, error messages, dialogs, and toasts.
    - Built-in language selector in the popup and options page allows switching languages instantly without requiring a page reload or extension restart.
    - Language preferences persist across browser restarts.
@@ -136,7 +165,7 @@
 
 The extension determines link-clicking and tab behavior using a strict, predictable 4-tier precedence hierarchy:
 
-```
+```text
 [ Tier 1: Extension Master Switch ]
                │
       Is extension enabled?
@@ -199,6 +228,9 @@ To install and run MaiTab in Google Chrome:
 Click the MaiTab icon in the Chrome toolbar:
 - **Language Selector (Top Bar):** Switch dynamically between English, 简体中文, and 日本語.
 - **Master Switch (Top Right):** Instantly enable or pause link interception without uninstalling.
+- **Theme Quick Toggle (Sun / Moon):** Toggle between Light and Dark mode with a single click.
+- **Version Badge & Check for Updates:** View extension version (`v1.31`) and click **Check** to inspect GitHub for updates.
+- **Synchronization Card:** View real-time status (`Up to Date`, `Update Available`, `Checking`, `Update Failed`). When updates are available, click **Update & Sync** to update in-place.
 - **Current Website Card:**
   - View the active tab's hostname and status badge (`Bypassed`, `Foreground`, `Foreground (Whitelisted)`, `Background (Whitelisted)`, or `Background`).
   - **+ Whitelist / Whitelisted:** Quickly add or remove the active site from the tab-switching whitelist.
@@ -209,69 +241,66 @@ Click the MaiTab icon in the Chrome toolbar:
   - **Whitelist Tab:** View and manage whitelisted domains, toggle per-domain auto-focus, and add new whitelist rules.
   - **Complete Bypass Tab:** View and manage domains where MaiTab is completely inactive, with add and remove controls.
 
-### 2. Options Page
+### 2. Options Page (Advanced Settings)
 Right-click the extension icon and select **Options**, or click **Options ↗** inside the popup:
-- **General Preferences:** Configure Master switch, Global tab focus, and Adjacent tab positioning.
-- **Website Switching Whitelist:** Manage whitelisted domains with per-domain auto-focus switches, search filter, and bulk import/export.
-- **Complete Bypass List (Silent List):** Manage websites on which MaiTab is completely inactive, with search filter and bulk import/export.
+- **General Preferences:** Configure Master switch, Global tab focus, Adjacent tab positioning (`Open Next to Current Tab`), and Interface Theme appearance (`System`, `Dark Mode`, `Light Mode`).
+- **Website Switching Whitelist:** Manage whitelisted domains with per-domain auto-focus switches, search filter, and bulk JSON import/export.
+- **Complete Bypass List (Silent List):** Manage websites on which MaiTab is completely inactive, with search filter and bulk JSON import/export.
 - **Interactive Domain Match Tester:** Test any URL or domain against both the Complete Bypass List and Whitelist to verify which rule matches and the exact resulting tab behavior.
 - **Technical Documentation:** Review comprehensive domain matching rules, safety safeguards, and precedence logic.
 
 ---
 
-## Project Structure
+## Dependencies & Environment Requirements
 
-```text
-MaiTab/
-├── manifest.json                     # Chrome Manifest V3 configuration (v1.31)
-├── _locales/                         # Standard Chrome extension locale messages
-│   ├── en/messages.json              # English extension metadata
-│   ├── zh_CN/messages.json           # Chinese (Simplified) metadata
-│   └── ja/messages.json              # Japanese metadata
-├── background/
-│   └── service-worker.js             # Background service worker for tab creation
-├── content/
-│   └── content.js                    # Content script for link click interception & listener lifecycle
-├── common/
-│   ├── version-info.js               # Central version and commit info (v1.31)
-│   ├── updater.js                    # Manual update checker & synchronization client
-│   ├── i18n.js                       # Centralized multilingual localization engine (v1.31)
-│   ├── domain-matcher.js             # Domain normalization, whitelist & bypass matching logic
-│   ├── link-evaluator.js             # Click qualification, anchor safety, and bypass checks
-│   └── storage.js                    # Storage persistence for settings, whitelist, bypass & theme
-├── popup/
-│   ├── popup.html                    # Extension popup layout with Light & Dark macOS Aqua themes (v1.31)
-│   ├── popup.css                     # macOS Aqua System Settings styling with theme tokens
-│   └── popup.js                      # Popup controller with theme, whitelist, bypass & update check
-├── options/
-│   ├── options.html                  # Options page with responsive macOS Light & Dark layout (v1.31)
-│   ├── options.css                   # Options page styles matching macOS design tokens
-│   └── options.js                    # Options page controller with theme, import/export & simulation (v1.31)
-├── scripts/
-│   ├── sync-repo.js                  # Direct iteration and GitHub synchronization utility (v1.31)
-│   └── sync-server.js                # Local HTTP synchronization bridge server
-├── icons/
-│   ├── icon16.png                    # Extension icon (16x16)
-│   ├── icon32.png                    # Extension icon (32x32)
-│   ├── icon48.png                    # Extension icon (48x48)
-│   ├── icon128.png                   # Extension icon (128x128)
-│   └── icon512.png                   # Extension icon (512x512)
-├── tests/
-│   ├── i18n.test.js                  # Multilingual translation & completeness tests
-│   ├── domain-matcher.test.js        # Domain normalization, whitelist, bypass & precedence tests
-│   ├── link-interceptor.test.js      # Click interception, safety edge cases & bypass tests
-│   ├── storage.test.js               # Storage persistence, CRUD, theme & bypass list tests
-│   ├── manifest-and-integration.test.js # Manifest V3, 6-scenario verification & E2E simulation (v1.31)
-│   ├── ui-layout-and-responsiveness.test.js # Real headless Chrome CDP layout & viewport tests (v1.31)
-│   ├── theme-and-sync.test.js        # Light/Dark mode toggle, persistence & sync workflow tests
-│   ├── direct-iteration.test.js      # Direct repository iteration, conflict detection & version tests
-│   ├── popup-whitelist-focus.test.js # Whitelist management & focus mode suite
-│   └── update-and-theme-system.test.js # Update checking, sync & real-time system theme suite
-├── MaiTab.png                        # Master brand icon asset (512x512)
-├── package.json                      # Project metadata (v1.31.0) and test/sync scripts
-├── POPUP_UI_SPEC.md                  # Primary UI design specification reference (v1.31)
-└── README.md                         # Technical documentation (v1.31)
-```
+### Runtime Environment
+- **Browser:** Google Chrome v88+ (or any Chromium-based browser supporting Manifest V3, such as Microsoft Edge, Brave, Opera, Vivaldi).
+- **Runtime Dependencies:** **Zero external dependencies.** Built entirely with native vanilla JavaScript (ES6+) and standard CSS3. No external JavaScript frameworks (React, Vue, etc.), no CSS libraries, no runtime npm packages, no third-party CDNs, and no telemetry or tracking scripts.
+
+### Development & Synchronization Prerequisites
+- **Node.js:** v18.0.0 or later (required only for running the native automated test suite `npm test` via Node's built-in test runner, or running local synchronization scripts).
+- **Git:** v2.20 or later (required for local repository iteration, synchronization via `scripts/sync-repo.js`, and conflict resolution).
+- **Optional Local Sync Server:** Node.js HTTP bridge (`scripts/sync-server.js` or systemd service `maitab-sync.service` on port `8765`) if utilizing in-popup one-click repository synchronization.
+
+---
+
+## Troubleshooting & FAQ
+
+### 1. Links are not opening in a new tab
+- **Check Master Switch:** Ensure the master toggle in the extension popup (top-right) or Options page is turned ON. When paused, the status badge shows `Paused` and links navigate natively.
+- **Internal / Restricted Pages:** Chrome strictly prohibits extensions from injecting content scripts into special pages, including `chrome://`, `chrome-extension://`, `edge://`, `about:blank`, Chrome Web Store, and DevTools pages. On these pages, links follow default browser behavior.
+- **Complete Bypass List (Silent List):** Verify if the active domain is listed in the Complete Bypass List. On bypassed domains, MaiTab completely unregisters event listeners and lets Chrome handle all navigation natively.
+- **In-Page Anchor Links:** Fragment links (e.g., `<a href="#section">`) are intentionally ignored by MaiTab to ensure smooth on-page scrolling without opening redundant tabs.
+- **Modifier Keys & Alternate Clicks:** If `Ctrl`, `Cmd`, `Shift`, or `Alt` is held, or if you right-click or middle-click, native Chrome shortcut handling takes over.
+- **Interactive Elements & Form Controls:** Buttons, inputs, `<select>` dropdowns, `contenteditable` fields, and links with `download` attributes are preserved for normal interaction.
+- **Text Selection Dragging:** If you drag your cursor to select text inside a hyperlink, MaiTab suppresses tab opening to prevent accidental navigation while copying text.
+
+### 2. Tab opens in the background instead of switching to the foreground (or vice versa)
+- **Check Setting Precedence Hierarchy:**
+  1. If the domain is in the **Website Whitelist**, its **per-site focus setting** strictly overrides the global switch. Check the domain's toggle in the Whitelist tab or Options page (`Focus ON` for foreground, `Focus OFF` for background).
+  2. If the domain is **not whitelisted**, verify the **Global Tab Focus Toggle** in the popup or options page. When OFF (default), links open in background tabs; when ON, links immediately receive focus.
+- **Use the Interactive Domain Match Tester:** Open the Options page and paste the destination URL into the **Interactive Domain Match Tester** to view the exact rule match and resulting tab focus behavior in real time.
+
+### 3. Update check displays "Update Failed" in the popup
+- **GitHub API Connectivity / Rate Limiting:** Checking remote updates queries the public GitHub REST API (`https://api.github.com/repos/Melony-mai/MaiTab`). Ensure your device has an active internet connection. Unauthenticated requests to GitHub are subject to IP rate limits (60 requests/hour).
+- **Local Synchronization Service Status:** For one-click in-popup synchronization, ensure the local synchronization bridge is running (`npm run sync:server` or `systemctl --user status maitab-sync.service`). If the server is offline, you can run `npm run sync` directly from the terminal.
+
+### 4. Git conflict detected during synchronization
+- **Local Work Protection:** MaiTab automatically stashes uncommitted modifications and untracked files before pulling updates, so no work is ever lost.
+- **Resolving Conflicts:** If remote changes conflict with local commits during rebase:
+  1. Open the conflicted files indicated in the error message.
+  2. Resolve the standard conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`).
+  3. Stage the resolved files: `git add <file>`.
+  4. Continue rebase: `git rebase --continue`.
+  5. To abort the update and return cleanly to your pre-sync state: `git rebase --abort`.
+
+### 5. Extension fails to load in Chrome ("Load Unpacked")
+- **Developer Mode:** Ensure the **Developer mode** toggle in `chrome://extensions/` (top right) is switched ON.
+- **Correct Root Directory:** In the file picker, select the project root folder containing `manifest.json` (not a subfolder like `popup` or `content`).
+- **File Permissions:** Verify that the files have read permissions for your user account.
+
+### 6. Theme appearance does not match system theme
+- **Manual Theme Override:** If you previously manually toggled Light Mode or Dark Mode, your manual preference remains locked across sessions. To re-enable automatic detection, select **System** from the Theme Appearance dropdown in Popup or Options.
 
 ---
 
@@ -287,7 +316,7 @@ MaiTab features an integrated update-check and synchronization workflow directly
    - **Up to Date:** Your local project matches the latest remote commit on GitHub.
    - **Update Available:** New incoming commits were found on GitHub. The card displays the number of incoming commits and lists their summary titles and short commit hashes.
    - **Checking:** An update check is currently contacting GitHub and local services.
-   - **Update Failed:** Displays specific error diagnostics (e.g. network reachability, rate limiting, or sync conflicts).
+   - **Update Failed:** Displays specific error diagnostics (e.g., network reachability, rate limiting, or sync conflicts).
 
 ### How to Synchronize Updates
 1. When updates are available, click the **"Update & Sync"** button directly in the popup settings interface.
@@ -328,7 +357,7 @@ MaiTab provides three distinct visual themes crafted according to Apple's macOS 
 
 ---
 
-## Direct GitHub Repository Iteration
+## Direct GitHub Repository Iteration & CLI Scripts
 
 MaiTab provides a direct iteration capability that allows you to safely synchronize the project with the latest commits from its remote GitHub repository and use the updated codebase as the basis for subsequent development without manual re-cloning or re-downloading.
 
@@ -401,6 +430,64 @@ The test suite validates:
 8. **UI Layout & Responsiveness:** Verified via real headless Chrome DevTools Protocol (CDP) across multiple viewports and display scale factors (100%, 125%, 150%, 200%).
 9. **GitHub Repository Synchronization:** Verified safe stashing, fetch, rebase, and restoration workflow.
 10. **Direct Repository Iteration Suite:** Validates remote fetching, in-place fast-forward and rebase synchronization, local uncommitted modifications protection, conflict detection and actionable diagnostics, dry-run checks, and project-wide version consistency.
+
+---
+
+## Project Structure
+
+```text
+MaiTab/
+├── manifest.json                     # Chrome Manifest V3 configuration (v1.31)
+├── _locales/                         # Standard Chrome extension locale messages
+│   ├── en/messages.json              # English extension metadata
+│   ├── zh_CN/messages.json           # Chinese (Simplified) metadata
+│   └── ja/messages.json              # Japanese metadata
+├── background/
+│   └── service-worker.js             # Background service worker for tab creation
+├── content/
+│   └── content.js                    # Content script for link click interception & listener lifecycle
+├── common/
+│   ├── version-info.js               # Central version and commit info (v1.31)
+│   ├── updater.js                    # Manual update checker & synchronization client
+│   ├── i18n.js                       # Centralized multilingual localization engine (v1.31)
+│   ├── domain-matcher.js             # Domain normalization, whitelist & bypass matching logic
+│   ├── link-evaluator.js             # Click qualification, anchor safety, and bypass checks
+│   └── storage.js                    # Storage persistence for settings, whitelist, bypass & theme
+├── popup/
+│   ├── popup.html                    # Extension popup layout with Light & Dark macOS Aqua themes (v1.31)
+│   ├── popup.css                     # macOS Aqua System Settings styling with theme tokens
+│   └── popup.js                      # Popup controller with theme, whitelist, bypass & update check
+├── options/
+│   ├── options.html                  # Options page with responsive macOS Light & Dark layout (v1.31)
+│   ├── options.css                   # Options page styles matching macOS design tokens
+│   └── options.js                    # Options page controller with theme, import/export & simulation (v1.31)
+├── scripts/
+│   ├── sync-repo.js                  # Direct iteration and GitHub synchronization utility (v1.31)
+│   └── sync-server.js                # Local HTTP synchronization bridge server
+├── icons/
+│   ├── icon16.png                    # Extension icon (16x16)
+│   ├── icon32.png                    # Extension icon (32x32)
+│   ├── icon48.png                    # Extension icon (48x48)
+│   ├── icon128.png                   # Extension icon (128x128)
+│   └── icon512.png                   # Extension icon (512x512)
+├── tests/
+│   ├── i18n.test.js                  # Multilingual translation & completeness tests
+│   ├── domain-matcher.test.js        # Domain normalization, whitelist, bypass & precedence tests
+│   ├── link-interceptor.test.js      # Click interception, safety edge cases & bypass tests
+│   ├── storage.test.js               # Storage persistence, CRUD, theme & bypass list tests
+│   ├── manifest-and-integration.test.js # Manifest V3, 6-scenario verification & E2E simulation (v1.31)
+│   ├── ui-layout-and-responsiveness.test.js # Real headless Chrome CDP layout & viewport tests (v1.31)
+│   ├── theme-and-sync.test.js        # Light/Dark mode toggle, persistence & sync workflow tests
+│   ├── direct-iteration.test.js      # Direct repository iteration, conflict detection & version tests
+│   ├── popup-whitelist-focus.test.js # Whitelist management & focus mode suite
+│   └── update-and-theme-system.test.js # Update checking, sync & real-time system theme suite
+├── MaiTab.png                        # Master brand icon asset (512x512)
+├── package.json                      # Project metadata (v1.31.0) and test/sync scripts
+├── POPUP_UI_SPEC.md                  # Primary UI design specification reference (v1.31)
+├── README.md                         # English technical documentation (v1.31)
+├── README_zh-CN.md                   # Simplified Chinese technical documentation (v1.31)
+└── README_ja.md                      # Japanese technical documentation (v1.31)
+```
 
 ---
 
