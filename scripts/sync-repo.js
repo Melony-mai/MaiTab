@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * MaiTab - Repository Synchronization and Direct Iteration Utility (v1.31)
+ * MaiTab - Repository Synchronization and Direct Iteration Utility (v1.5)
  *
  * Safely synchronizes the local development repository with the latest changes
  * from the remote GitHub repository:

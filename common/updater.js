@@ -11,8 +11,8 @@
     module.exports = factory(VersionInfo);
   } else {
     root.Updater = factory(root.VersionInfo || {
-      version: '1.31',
-      fullVersion: '1.31.0',
+      version: '1.5',
+      fullVersion: '1.5.0',
       commit: 'd0b3c49',
       branch: 'main',
       repository: 'Melony-mai/MaiTab',

@@ -23,6 +23,7 @@ function updateVersionInfoFile(latestCommit) {
     let content = fs.readFileSync(versionFile, 'utf8');
     const shortSha = (latestCommit.match(/^([a-f0-9]{7,40})/i) || ['', ''])[1];
     if (shortSha) {
+      content = content.replace(/let\s+commit\s*=\s*'[a-f0-9]+'/i, `let commit = '${shortSha}'`);
       content = content.replace(/commit:\s*'[a-f0-9]+'/i, `commit: '${shortSha}'`);
       fs.writeFileSync(versionFile, content, 'utf8');
     }

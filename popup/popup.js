@@ -430,21 +430,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function showWhitelistError(msg) {
+    if (!inputError) return;
     inputError.textContent = msg;
     inputError.classList.remove('hidden');
   }
 
   function hideWhitelistError() {
+    if (!inputError) return;
     inputError.textContent = '';
     inputError.classList.add('hidden');
   }
 
   function showBypassError(msg) {
+    if (!bypassInputError) return;
     bypassInputError.textContent = msg;
     bypassInputError.classList.remove('hidden');
   }
 
   function hideBypassError() {
+    if (!bypassInputError) return;
     bypassInputError.textContent = '';
     bypassInputError.classList.add('hidden');
   }

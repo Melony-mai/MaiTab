@@ -1,4 +1,4 @@
-# MaiTab - Smart Tab Manager for Google Chrome (v1.31)
+# MaiTab - Smart Tab Manager for Google Chrome (v1.5)
 
 <p align="center">
   <strong>English</strong> | <a href="README_zh-CN.md">简体中文</a> | <a href="README_ja.md">日本語</a>
@@ -12,8 +12,9 @@
 
 ## Table of Contents
 
+- [What's New in v1.5](#whats-new-in-v15)
 - [What's New in v1.31](#whats-new-in-v131)
-- [What's New in v1.3](#whats-new-in-v131)
+- [What's New in v1.3](#whats-new-in-v13)
 - [What's New in v1.2](#whats-new-in-v12)
 - [Key Features](#key-features)
 - [Behavior Decision Matrix & Setting Precedence](#behavior-decision-matrix-setting-precedence)
@@ -30,6 +31,21 @@
 - [Project Structure](#project-structure)
 - [Technical Details & Permissions](#technical-details-permissions)
 - [License](#license)
+
+---
+
+## What's New in v1.5
+
+- **Comprehensive Self-Audit & Robustness Hardening:**
+  - **Safe URL Handling in Service Worker:** Guarded URL parsing for incoming messages in `background/service-worker.js` with defensive try/catch blocks, ensuring malformed or unsupported URLs do not cause runtime errors.
+  - **Window-Context Tab Creation:** Explicitly assigns `windowId` to newly created tabs based on the sender tab's window, guaranteeing links open in the exact active window.
+  - **Dynamic Export Versioning:** Options page JSON exports for Whitelist and Complete Bypass lists now dynamically query `VersionInfo.version` instead of hardcoded strings.
+  - **Sync Server Regex Parsing:** Enhanced `updateVersionInfoFile` in `scripts/sync-server.js` to reliably match both object-shorthand and variable assignment declarations in `version-info.js`.
+  - **Defensive DOM Error Handling:** Added guards in popup script error display handlers to prevent null reference errors on dynamic UI panels.
+- **Project Version Update to v1.5:**
+  - Bumped version to **v1.5** (`1.5.0` in `package.json`) consistently across `manifest.json`, `package.json`, `version-info.js`, `updater.js`, `i18n.js` dictionaries (`en`, `zh-CN`, `ja`), interface badges, export metadata, and test verification suites.
+- **Complete Test Suite Verification:**
+  - 100% test pass rate across all 130 automated test cases, including end-to-end integration, headless Chrome CDP layout, display scaling, theme switching, and Git conflict workflows.
 
 ---
 
@@ -229,7 +245,7 @@ Click the MaiTab icon in the Chrome toolbar:
 - **Language Selector (Top Bar):** Switch dynamically between English, 简体中文, and 日本語.
 - **Master Switch (Top Right):** Instantly enable or pause link interception without uninstalling.
 - **Theme Quick Toggle (Sun / Moon):** Toggle between Light and Dark mode with a single click.
-- **Version Badge & Check for Updates:** View extension version (`v1.31`) and click **Check** to inspect GitHub for updates.
+- **Version Badge & Check for Updates:** View extension version (`v1.5`) and click **Check** to inspect GitHub for updates.
 - **Synchronization Card:** View real-time status (`Up to Date`, `Update Available`, `Checking`, `Update Failed`). When updates are available, click **Update & Sync** to update in-place.
 - **Current Website Card:**
   - View the active tab's hostname and status badge (`Bypassed`, `Foreground`, `Foreground (Whitelisted)`, `Background (Whitelisted)`, or `Background`).
@@ -310,7 +326,7 @@ MaiTab features an integrated update-check and synchronization workflow directly
 
 ### How to Check for Updates
 1. Open the MaiTab extension popup by clicking the extension icon in Chrome's toolbar.
-2. In the header next to the version badge (`v1.31`), click the **"Check"** / **"Check for Updates"** button.
+2. In the header next to the version badge (`v1.5`), click the **"Check"** / **"Check for Updates"** button.
 3. MaiTab will inspect the remote GitHub repository (`main` branch) and local project state.
 4. The synchronization card displays the current status:
    - **Up to Date:** Your local project matches the latest remote commit on GitHub.
@@ -426,7 +442,7 @@ The test suite validates:
 4. **Global Settings Fallback:** Websites not included in either list follow the global settings.
 5. **Precedence Hierarchy:** Complete Bypass List strictly takes precedence when a website matches both lists.
 6. **Persistence Across Restarts:** Settings, whitelist, bypass list, and theme preferences persist across simulated browser restarts.
-7. **Manifest V3 Structure:** Schema compliance, version 1.31 consistency, permissions, icon files, and localization.
+7. **Manifest V3 Structure:** Schema compliance, version 1.5 consistency, permissions, icon files, and localization.
 8. **UI Layout & Responsiveness:** Verified via real headless Chrome DevTools Protocol (CDP) across multiple viewports and display scale factors (100%, 125%, 150%, 200%).
 9. **GitHub Repository Synchronization:** Verified safe stashing, fetch, rebase, and restoration workflow.
 10. **Direct Repository Iteration Suite:** Validates remote fetching, in-place fast-forward and rebase synchronization, local uncommitted modifications protection, conflict detection and actionable diagnostics, dry-run checks, and project-wide version consistency.
@@ -437,7 +453,7 @@ The test suite validates:
 
 ```text
 MaiTab/
-├── manifest.json                     # Chrome Manifest V3 configuration (v1.31)
+├── manifest.json                     # Chrome Manifest V3 configuration (v1.5)
 ├── _locales/                         # Standard Chrome extension locale messages
 │   ├── en/messages.json              # English extension metadata
 │   ├── zh_CN/messages.json           # Chinese (Simplified) metadata
@@ -447,22 +463,22 @@ MaiTab/
 ├── content/
 │   └── content.js                    # Content script for link click interception & listener lifecycle
 ├── common/
-│   ├── version-info.js               # Central version and commit info (v1.31)
+│   ├── version-info.js               # Central version and commit info (v1.5)
 │   ├── updater.js                    # Manual update checker & synchronization client
-│   ├── i18n.js                       # Centralized multilingual localization engine (v1.31)
+│   ├── i18n.js                       # Centralized multilingual localization engine (v1.5)
 │   ├── domain-matcher.js             # Domain normalization, whitelist & bypass matching logic
 │   ├── link-evaluator.js             # Click qualification, anchor safety, and bypass checks
 │   └── storage.js                    # Storage persistence for settings, whitelist, bypass & theme
 ├── popup/
-│   ├── popup.html                    # Extension popup layout with Light & Dark macOS Aqua themes (v1.31)
+│   ├── popup.html                    # Extension popup layout with Light & Dark macOS Aqua themes (v1.5)
 │   ├── popup.css                     # macOS Aqua System Settings styling with theme tokens
 │   └── popup.js                      # Popup controller with theme, whitelist, bypass & update check
 ├── options/
-│   ├── options.html                  # Options page with responsive macOS Light & Dark layout (v1.31)
+│   ├── options.html                  # Options page with responsive macOS Light & Dark layout (v1.5)
 │   ├── options.css                   # Options page styles matching macOS design tokens
-│   └── options.js                    # Options page controller with theme, import/export & simulation (v1.31)
+│   └── options.js                    # Options page controller with theme, import/export & simulation (v1.5)
 ├── scripts/
-│   ├── sync-repo.js                  # Direct iteration and GitHub synchronization utility (v1.31)
+│   ├── sync-repo.js                  # Direct iteration and GitHub synchronization utility (v1.5)
 │   └── sync-server.js                # Local HTTP synchronization bridge server
 ├── icons/
 │   ├── icon16.png                    # Extension icon (16x16)
@@ -475,18 +491,18 @@ MaiTab/
 │   ├── domain-matcher.test.js        # Domain normalization, whitelist, bypass & precedence tests
 │   ├── link-interceptor.test.js      # Click interception, safety edge cases & bypass tests
 │   ├── storage.test.js               # Storage persistence, CRUD, theme & bypass list tests
-│   ├── manifest-and-integration.test.js # Manifest V3, 6-scenario verification & E2E simulation (v1.31)
-│   ├── ui-layout-and-responsiveness.test.js # Real headless Chrome CDP layout & viewport tests (v1.31)
+│   ├── manifest-and-integration.test.js # Manifest V3, 6-scenario verification & E2E simulation (v1.5)
+│   ├── ui-layout-and-responsiveness.test.js # Real headless Chrome CDP layout & viewport tests (v1.5)
 │   ├── theme-and-sync.test.js        # Light/Dark mode toggle, persistence & sync workflow tests
 │   ├── direct-iteration.test.js      # Direct repository iteration, conflict detection & version tests
 │   ├── popup-whitelist-focus.test.js # Whitelist management & focus mode suite
 │   └── update-and-theme-system.test.js # Update checking, sync & real-time system theme suite
 ├── MaiTab.png                        # Master brand icon asset (512x512)
-├── package.json                      # Project metadata (v1.31.0) and test/sync scripts
-├── POPUP_UI_SPEC.md                  # Primary UI design specification reference (v1.31)
-├── README.md                         # English technical documentation (v1.31)
-├── README_zh-CN.md                   # Simplified Chinese technical documentation (v1.31)
-└── README_ja.md                      # Japanese technical documentation (v1.31)
+├── package.json                      # Project metadata (v1.5.0) and test/sync scripts
+├── POPUP_UI_SPEC.md                  # Primary UI design specification reference (v1.5)
+├── README.md                         # English technical documentation (v1.5)
+├── README_zh-CN.md                   # Simplified Chinese technical documentation (v1.5)
+└── README_ja.md                      # Japanese technical documentation (v1.5)
 ```
 
 ---

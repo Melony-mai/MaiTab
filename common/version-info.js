@@ -1,5 +1,5 @@
 /**
- * MaiTab - Build and Version Information (v1.31)
+ * MaiTab - Build and Version Information (v1.5)
  */
 
 (function (root, factory) {
@@ -27,8 +27,8 @@
   }
 
   return {
-    version: '1.31',
-    fullVersion: '1.31.0',
+    version: '1.5',
+    fullVersion: '1.5.0',
     commit,
     fullCommit,
     branch: 'main',

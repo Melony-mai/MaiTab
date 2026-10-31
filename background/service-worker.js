@@ -72,7 +72,15 @@ async function handleMessage(request, sender) {
 
     case 'checkSiteStatus': {
       const settings = await StorageManager.getSettings();
-      const currentHost = request.currentHost || (sender.tab?.url ? new URL(sender.tab.url).hostname : '');
+      let senderHost = '';
+      if (sender?.tab?.url) {
+        try {
+          senderHost = new URL(sender.tab.url).hostname;
+        } catch {
+          senderHost = '';
+        }
+      }
+      const currentHost = request.currentHost || senderHost;
       const isBypassed = DomainMatcher.isDomainBypassed(currentHost, settings.bypassList);
       const matchedBypassRule = DomainMatcher.getMatchedBypassRule(currentHost, settings.bypassList);
       const isWhitelisted = DomainMatcher.isDomainWhitelisted(currentHost, settings.whitelist);
@@ -152,6 +160,9 @@ async function handleOpenTab(request, sender) {
 
   // If sender tab is available, place new tab next to current tab and set openerTabId
   if (sender?.tab) {
+    if (typeof sender.tab.windowId === 'number') {
+      createProps.windowId = sender.tab.windowId;
+    }
     if (settings.openNextToCurrent && typeof sender.tab.index === 'number') {
       createProps.index = sender.tab.index + 1;
     }
