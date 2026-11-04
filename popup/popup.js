@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentSettings = null;
   let activeTabHostname = '';
   let activeTabName = 'whitelist'; // 'whitelist' or 'bypass'
+  let lastCheckResult = null;
 
   /**
    * Sets up language from stored preferences or browser default.
@@ -695,6 +696,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         ? await Updater.checkForUpdates()
         : { success: false, error: 'Updater module not available' };
 
+      lastCheckResult = result;
       checkUpdateBtn.classList.remove('is-checking');
 
       if (!result.success || result.status === 'UPDATE_FAILED') {
@@ -771,13 +773,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
+      const syncOptions = {};
+      if (lastCheckResult?.latestCommit) {
+        syncOptions.targetCommit = lastCheckResult.latestCommit.sha;
+        syncOptions.latestCommit = lastCheckResult.latestCommit;
+      }
+      if (lastCheckResult?.incomingCommits) {
+        syncOptions.incomingCommits = lastCheckResult.incomingCommits;
+      }
+
       const result = typeof Updater !== 'undefined'
-        ? await Updater.performSync()
+        ? await Updater.performSync(syncOptions)
         : { success: false, error: 'Updater module not available' };
 
       syncNowBtn.disabled = false;
 
       if (result.success) {
+        // Record sync state in StorageManager immediately
+        if (typeof StorageManager !== 'undefined' && typeof StorageManager.recordSuccessfulSync === 'function') {
+          try {
+            await StorageManager.recordSuccessfulSync({
+              commit: result.commit || result.latestCommit || syncOptions.targetCommit,
+              fullCommit: result.fullCommit,
+              latestCommit: result.latestCommit,
+              incomingCommits: syncOptions.incomingCommits
+            });
+          } catch (_) {}
+        }
+
+        // Refresh local update status immediately
         if (checkUpdateBtn) checkUpdateBtn.classList.remove('has-update');
         if (syncStatusBadge) {
           syncStatusBadge.className = 'badge badge-success';
@@ -788,6 +812,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         if (syncDetailsBox) syncDetailsBox.classList.add('hidden');
         if (syncActionArea) syncActionArea.classList.add('hidden');
+
+        lastCheckResult = {
+          success: true,
+          status: 'UP_TO_DATE',
+          upToDate: true,
+          behindCount: 0,
+          incomingCommits: []
+        };
 
         // Re-check update status after short delay to refresh all state
         setTimeout(() => triggerUpdateCheck(), 1200);
@@ -838,7 +870,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderUI();
   });
 
-  // Initial boot
+  // Initial boot: restore persisted synchronization state if available
+  try {
+    if (typeof StorageManager !== 'undefined' && typeof StorageManager.getSyncState === 'function') {
+      const savedSync = await StorageManager.getSyncState();
+      if (savedSync && savedSync.lastSyncCommit) {
+        if (typeof VersionInfo !== 'undefined' && VersionInfo && typeof VersionInfo.setCommit === 'function') {
+          VersionInfo.setCommit(savedSync.lastSyncCommit, savedSync.lastSyncFullCommit);
+        }
+        if (typeof Updater !== 'undefined' && Updater) {
+          Updater.lastSyncCommit = savedSync.lastSyncCommit;
+        }
+      }
+    }
+  } catch (_) {}
+
   await resolveCurrentTabHostname();
   await renderUI();
 });

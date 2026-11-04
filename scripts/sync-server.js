@@ -21,7 +21,8 @@ function updateVersionInfoFile(latestCommit) {
     const versionFile = path.join(rootDir, 'common/version-info.js');
     if (!fs.existsSync(versionFile)) return;
     let content = fs.readFileSync(versionFile, 'utf8');
-    const shortSha = (latestCommit.match(/^([a-f0-9]{7,40})/i) || ['', ''])[1];
+    const raw = typeof latestCommit === 'string' ? latestCommit : (latestCommit?.sha || latestCommit?.commit || '');
+    const shortSha = (raw.match(/^([a-f0-9]{7,40})/i) || ['', ''])[1].substring(0, 7);
     if (shortSha) {
       content = content.replace(/let\s+commit\s*=\s*'[a-f0-9]+'/i, `let commit = '${shortSha}'`);
       content = content.replace(/commit:\s*'[a-f0-9]+'/i, `commit: '${shortSha}'`);

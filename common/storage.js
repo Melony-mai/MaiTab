@@ -23,24 +23,62 @@
     theme: 'dark'              // Theme preference: 'dark' or 'light'
   };
 
+  const DEFAULT_SYNC_STATE = {
+    lastSyncCommit: '',       // Short commit SHA of last successfully synchronized commit
+    lastSyncFullCommit: '',   // Full commit SHA of last successfully synchronized commit
+    lastSyncTime: null,       // ISO timestamp of last successful synchronization
+    lastCheckTime: null,      // ISO timestamp of last update check
+    syncedCommits: [],        // List of synchronized commit SHAs (to prevent repeated update alerts)
+    updateStatus: 'UP_TO_DATE' // Last known update status ('UP_TO_DATE', 'UPDATE_AVAILABLE', 'UPDATE_FAILED')
+  };
+
   /**
    * Browser localStorage fallback when chrome.storage is unavailable (e.g. during standalone testing).
    */
   const webStorageFallback = (typeof localStorage !== 'undefined') ? {
     get: (defaults, callback) => {
       try {
+        if (typeof defaults === 'string') {
+          const raw = localStorage.getItem(defaults);
+          callback({ [defaults]: raw ? JSON.parse(raw) : null });
+          return;
+        }
+        if (defaults && typeof defaults === 'object') {
+          const result = {};
+          for (const key of Object.keys(defaults)) {
+            if (key === 'maitab_sync_state') {
+              const raw = localStorage.getItem('maitab_sync_state');
+              result[key] = raw ? JSON.parse(raw) : defaults[key];
+            } else {
+              const raw = localStorage.getItem('maitab_settings');
+              const parsed = raw ? JSON.parse(raw) : {};
+              result[key] = (key in parsed) ? parsed[key] : defaults[key];
+            }
+          }
+          callback(result);
+          return;
+        }
         const raw = localStorage.getItem('maitab_settings');
         const parsed = raw ? JSON.parse(raw) : {};
-        callback({ ...defaults, ...parsed });
+        callback({ ...parsed });
       } catch (e) {
-        callback({ ...defaults });
+        callback(typeof defaults === 'object' ? { ...defaults } : {});
       }
     },
     set: (items, callback) => {
       try {
-        const raw = localStorage.getItem('maitab_settings');
-        const current = raw ? JSON.parse(raw) : {};
-        localStorage.setItem('maitab_settings', JSON.stringify({ ...current, ...items }));
+        if (items && typeof items === 'object') {
+          if ('maitab_sync_state' in items) {
+            localStorage.setItem('maitab_sync_state', JSON.stringify(items.maitab_sync_state));
+          }
+          const settingsOnly = { ...items };
+          delete settingsOnly.maitab_sync_state;
+          if (Object.keys(settingsOnly).length > 0) {
+            const raw = localStorage.getItem('maitab_settings');
+            const current = raw ? JSON.parse(raw) : {};
+            localStorage.setItem('maitab_settings', JSON.stringify({ ...current, ...settingsOnly }));
+          }
+        }
       } catch (e) {}
       if (typeof callback === 'function') callback();
     }
@@ -52,6 +90,16 @@
   function getStorageArea() {
     if (typeof chrome !== 'undefined' && chrome.storage) {
       return chrome.storage.sync || chrome.storage.local;
+    }
+    return webStorageFallback;
+  }
+
+  /**
+   * Resolves storage area specifically suited for machine-local sync records.
+   */
+  function getSyncStorageArea() {
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+      return chrome.storage.local || chrome.storage.sync;
     }
     return webStorageFallback;
   }
@@ -429,6 +477,130 @@
   }
 
   /**
+   * Sanitizes and normalizes the synchronization state record.
+   */
+  function normalizeSyncState(raw) {
+    const s = raw && typeof raw === 'object' ? raw : {};
+    const commits = Array.isArray(s.syncedCommits)
+      ? Array.from(new Set(s.syncedCommits.map(c => String(c).trim().toLowerCase()).filter(Boolean)))
+      : [];
+
+    let lastCommit = typeof s.lastSyncCommit === 'string' ? s.lastSyncCommit.trim().toLowerCase() : '';
+    if (!lastCommit && commits.length > 0) {
+      lastCommit = commits[0];
+    }
+
+    return {
+      lastSyncCommit: lastCommit,
+      lastSyncFullCommit: typeof s.lastSyncFullCommit === 'string' ? s.lastSyncFullCommit.trim().toLowerCase() : '',
+      lastSyncTime: typeof s.lastSyncTime === 'string' ? s.lastSyncTime : null,
+      lastCheckTime: typeof s.lastCheckTime === 'string' ? s.lastCheckTime : null,
+      syncedCommits: commits,
+      updateStatus: typeof s.updateStatus === 'string' ? s.updateStatus : 'UP_TO_DATE'
+    };
+  }
+
+  /**
+   * Retrieves the current synchronization state record.
+   *
+   * @param {Object} [customStorage]
+   * @returns {Promise<typeof DEFAULT_SYNC_STATE>}
+   */
+  async function getSyncState(customStorage) {
+    const storage = customStorage || getSyncStorageArea();
+    if (!storage) return { ...DEFAULT_SYNC_STATE };
+
+    return new Promise((resolve) => {
+      storage.get({ maitab_sync_state: DEFAULT_SYNC_STATE }, (items) => {
+        let state = items?.maitab_sync_state;
+        if (!state && items && typeof items === 'object') {
+          if (items.lastSyncCommit) {
+            state = items;
+          }
+        }
+        resolve(normalizeSyncState(state));
+      });
+    });
+  }
+
+  /**
+   * Saves partial or complete synchronization state.
+   *
+   * @param {Partial<typeof DEFAULT_SYNC_STATE>} partialSyncState
+   * @param {Object} [customStorage]
+   * @returns {Promise<typeof DEFAULT_SYNC_STATE>}
+   */
+  async function saveSyncState(partialSyncState, customStorage) {
+    const storage = customStorage || getSyncStorageArea();
+    if (!storage) return normalizeSyncState(partialSyncState);
+
+    const current = await getSyncState(customStorage);
+    const updated = normalizeSyncState({ ...current, ...partialSyncState });
+
+    return new Promise((resolve, reject) => {
+      storage.set({ maitab_sync_state: updated }, () => {
+        if (typeof chrome !== 'undefined' && chrome.runtime?.lastError) {
+          reject(chrome.runtime.lastError);
+        } else {
+          resolve(updated);
+        }
+      });
+    });
+  }
+
+  /**
+   * Records a successful synchronization event with the synchronized commit.
+   *
+   * @param {Object} details
+   * @param {string} [details.commit]
+   * @param {string} [details.fullCommit]
+   * @param {string} [details.latestCommit]
+   * @param {string[]} [details.incomingCommits]
+   * @param {Object} [customStorage]
+   * @returns {Promise<typeof DEFAULT_SYNC_STATE>}
+   */
+  async function recordSuccessfulSync(details = {}, customStorage) {
+    const current = await getSyncState(customStorage);
+    const commitRaw = details.commit || details.latestCommit || '';
+    const shortSha = typeof commitRaw === 'string'
+      ? (commitRaw.match(/^([a-f0-9]{7,40})/i) || ['', commitRaw])[1].substring(0, 7).toLowerCase()
+      : (commitRaw?.sha || '').substring(0, 7).toLowerCase();
+    const fullSha = details.fullCommit
+      ? String(details.fullCommit).trim().toLowerCase()
+      : (shortSha.length === 40 ? shortSha : '');
+
+    const newSyncedList = [...current.syncedCommits];
+    if (shortSha && !newSyncedList.includes(shortSha)) {
+      newSyncedList.unshift(shortSha);
+    }
+    if (Array.isArray(details.incomingCommits)) {
+      details.incomingCommits.forEach(c => {
+        const sha = (String(c).match(/^([a-f0-9]{7,40})/i) || ['', ''])[1].substring(0, 7).toLowerCase();
+        if (sha && !newSyncedList.includes(sha)) {
+          newSyncedList.push(sha);
+        }
+      });
+    }
+
+    const updated = await saveSyncState({
+      lastSyncCommit: shortSha || current.lastSyncCommit,
+      lastSyncFullCommit: fullSha || current.lastSyncFullCommit,
+      lastSyncTime: new Date().toISOString(),
+      syncedCommits: newSyncedList,
+      updateStatus: 'UP_TO_DATE'
+    }, customStorage);
+
+    return updated;
+  }
+
+  /**
+   * Resets synchronization state to default.
+   */
+  async function clearSyncState(customStorage) {
+    return saveSyncState(DEFAULT_SYNC_STATE, customStorage);
+  }
+
+  /**
    * Listens for changes in Chrome storage and notifies callback.
    *
    * @param {function(typeof DEFAULT_SETTINGS): void} callback
@@ -451,6 +623,7 @@
 
   return {
     DEFAULT_SETTINGS,
+    DEFAULT_SYNC_STATE,
     getSettings,
     saveSettings,
     addWhitelistDomain,
@@ -461,6 +634,10 @@
     removeBypassDomain,
     clearBypassList,
     resetToDefaults,
+    getSyncState,
+    saveSyncState,
+    recordSuccessfulSync,
+    clearSyncState,
     onSettingsChanged
   };
 });

@@ -78,8 +78,8 @@ All design variables are declared in the `:root` scope to provide a single sourc
 ```css
 /* Primary UI Font Stack (macOS native + universal CJK & system fallbacks) */
 font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
-             "PingFang SC", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
-             "Microsoft YaHei", system-ui, sans-serif;
+             "Segoe UI Variable Text", "Segoe UI", "PingFang SC", "Hiragino Sans",
+             "Hiragino Kaku Gothic ProN", "Microsoft YaHei", system-ui, sans-serif;
 
 /* Monospace Font Stack (for API keys, hashes, code) */
 font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -117,24 +117,37 @@ Applied globally across all elements:
 
 ### Viewport Dimensions
 ```css
-html, body {
+html {
   margin: 0;
   padding: 0;
   width: 368px;
+  min-width: 368px;
+  max-width: 368px;
   background-color: var(--mac-window-bg);
   color: var(--mac-text-primary);
   font-size: 13px;
   line-height: 1.4;
-  overflow-x: hidden;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 body {
-  padding: 16px;
+  margin: 0;
+  padding: 12px 14px;
+  width: 368px;
+  min-width: 368px;
+  max-width: 368px;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  max-height: 580px;
+  gap: 10px;
+  max-height: 590px;
+  overflow-x: hidden;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--mac-scrollbar-thumb) transparent;
+  background-color: var(--mac-window-bg);
+  color: var(--mac-text-primary);
 }
 ```
 

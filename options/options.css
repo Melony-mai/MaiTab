@@ -95,16 +95,47 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
-               "PingFang SC", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
-               "Microsoft YaHei", system-ui, sans-serif;
+               "Segoe UI Variable Text", "Segoe UI", "PingFang SC", "Hiragino Sans",
+               "Hiragino Kaku Gothic ProN", "Microsoft YaHei", system-ui, sans-serif;
   background-color: var(--mac-window-bg);
   color: var(--mac-text-primary);
   font-size: 13.5px;
   line-height: 1.45;
   overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--mac-scrollbar-thumb) transparent;
 }
 
-/* Custom macOS Overlay Scrollbar */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+/* Edge & Cross-Browser Form Control Resets */
+select::-ms-expand {
+  display: none;
+}
+
+input::-ms-clear,
+input::-ms-reveal {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Custom macOS Overlay Scrollbar (WebKit & Standard) */
+html,
+body,
+.whitelist-table-wrap {
+  scrollbar-width: thin;
+  scrollbar-color: var(--mac-scrollbar-thumb) transparent;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -238,6 +269,7 @@ select.lang-select,
 select.select-focus {
   appearance: none;
   -webkit-appearance: none;
+  -moz-appearance: none;
   background-color: var(--mac-btn-bg);
   background-image: var(--mac-select-arrow);
   background-repeat: no-repeat;
