@@ -281,7 +281,11 @@ test('Direct One-Click Synchronization and Popup Layout Optimization Suite', asy
 
     // Click Update & Sync button directly
     await session.evaluate(`document.getElementById('syncNowBtn').click()`);
-    await new Promise(r => setTimeout(r, 300));
+    for (let i = 0; i < 25; i++) {
+      const btnDisabled = await session.evaluate(`document.getElementById('syncNowBtn').disabled`);
+      if (!btnDisabled) break;
+      await new Promise(r => setTimeout(r, 50));
+    }
 
     assert.strictEqual(syncPerformCalled, true, 'Direct synchronization must be called on click without terminal commands');
 
@@ -318,7 +322,11 @@ test('Direct One-Click Synchronization and Popup Layout Optimization Suite', asy
     await new Promise(r => setTimeout(r, 250));
 
     await session.evaluate(`document.getElementById('syncNowBtn').click()`);
-    await new Promise(r => setTimeout(r, 300));
+    for (let i = 0; i < 25; i++) {
+      const btnDisabled = await session.evaluate(`document.getElementById('syncNowBtn').disabled`);
+      if (!btnDisabled) break;
+      await new Promise(r => setTimeout(r, 50));
+    }
 
     const conflictState = await session.evaluate(`{
       badgeClass: document.getElementById('syncStatusBadge').className,
@@ -342,7 +350,11 @@ test('Direct One-Click Synchronization and Popup Layout Optimization Suite', asy
     });
 
     await session.evaluate(`document.getElementById('syncNowBtn').click()`);
-    await new Promise(r => setTimeout(r, 300));
+    for (let i = 0; i < 25; i++) {
+      const btnDisabled = await session.evaluate(`document.getElementById('syncNowBtn').disabled`);
+      if (!btnDisabled) break;
+      await new Promise(r => setTimeout(r, 50));
+    }
 
     const netErrState = await session.evaluate(`{
       badgeClass: document.getElementById('syncStatusBadge').className,

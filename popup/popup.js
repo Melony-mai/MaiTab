@@ -798,10 +798,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             await StorageManager.recordSuccessfulSync({
               commit: result.commit || result.latestCommit || syncOptions.targetCommit,
               fullCommit: result.fullCommit,
+              version: result.remoteVersion || result.version,
               latestCommit: result.latestCommit,
               incomingCommits: syncOptions.incomingCommits
             });
           } catch (_) {}
+        }
+
+        if ((result.remoteVersion || result.version) && typeof VersionInfo !== 'undefined' && VersionInfo && typeof VersionInfo.setVersion === 'function') {
+          VersionInfo.setVersion(result.remoteVersion || result.version);
         }
 
         // Refresh local update status immediately
@@ -880,6 +885,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (savedSync && savedSync.lastSyncCommit) {
         if (typeof VersionInfo !== 'undefined' && VersionInfo && typeof VersionInfo.setCommit === 'function') {
           VersionInfo.setCommit(savedSync.lastSyncCommit, savedSync.lastSyncFullCommit);
+        }
+        if (savedSync.lastSyncVersion && typeof VersionInfo !== 'undefined' && VersionInfo && typeof VersionInfo.setVersion === 'function') {
+          VersionInfo.setVersion(savedSync.lastSyncVersion);
         }
         if (typeof Updater !== 'undefined' && Updater) {
           Updater.lastSyncCommit = savedSync.lastSyncCommit;

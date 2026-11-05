@@ -1,4 +1,4 @@
-# MaiTab - Smart Tab Manager for Google Chrome (v1.5)
+# MaiTab - Smart Tab Manager for Google Chrome (v1.6)
 
 <p align="center">
   <strong>English</strong> | <a href="README_zh-CN.md">简体中文</a> | <a href="README_ja.md">日本語</a>
@@ -12,6 +12,7 @@
 
 ## Table of Contents
 
+- [What's New in v1.6](#whats-new-in-v16)
 - [What's New in v1.5](#whats-new-in-v15)
 - [What's New in v1.31](#whats-new-in-v131)
 - [What's New in v1.3](#whats-new-in-v13)
@@ -31,6 +32,20 @@
 - [Project Structure](#project-structure)
 - [Technical Details & Permissions](#technical-details-permissions)
 - [License](#license)
+
+---
+
+## What's New in v1.6
+
+- **Fully Self-Contained GitHub Repository Synchronization:**
+  - **Zero Local Bridge / Server Requirement:** The extension operates completely self-contained on any machine after installation. It directly communicates with the GitHub REST API (`https://api.github.com/repos/Melony-mai/MaiTab`) to check for updates and retrieve commits without requiring a local sync bridge server (`sync-server.js`), node runtime, terminal commands, or any development environment setup.
+  - **Manifest V3 GitHub Host Permissions:** Added explicit `host_permissions` for GitHub API and content domains (`https://api.github.com/*`, `https://raw.githubusercontent.com/*`, `https://github.com/*`) in `manifest.json`, ensuring reliable, cross-origin network access across Chrome and Edge MV3 extension service workers and popup pages.
+  - **Seamless One-Click Browser Update & Retrieval:** When updates are available, clicking **Update & Sync** in the popup interface directly fetches and applies incoming commits, records synchronization state in browser storage (`chrome.storage`), updates active version and commit references, and refreshes the UI state to **Up to Date** with zero latency.
+  - **Service Worker Update Dispatch:** The background service worker (`background/service-worker.js`) now integrates updater dispatch handlers (`checkForUpdates`, `performSync`, `getSyncState`, `getVersionInfo`) for extension-wide update management.
+- **Project Version Update to v1.6:**
+  - Consistently updated project version to **v1.6** (`1.6.0` in `package.json`) across `manifest.json`, `package.json`, `version-info.js`, `updater.js`, `storage.js`, `i18n.js` dictionaries (`en`, `zh-CN`, `ja`), interface badges, export metadata, and test verification suites.
+- **Comprehensive Cross-Platform Test Verification:**
+  - Verified with extensive automated test suites covering headless Chrome and Edge CDP layout, direct GitHub update checks, incoming commits inspection, direct browser GitHub synchronization, and persistent update state across browser sessions.
 
 ---
 
@@ -245,7 +260,7 @@ Click the MaiTab icon in the Chrome toolbar:
 - **Language Selector (Top Bar):** Switch dynamically between English, 简体中文, and 日本語.
 - **Master Switch (Top Right):** Instantly enable or pause link interception without uninstalling.
 - **Theme Quick Toggle (Sun / Moon):** Toggle between Light and Dark mode with a single click.
-- **Version Badge & Check for Updates:** View extension version (`v1.5`) and click **Check** to inspect GitHub for updates.
+- **Version Badge & Check for Updates:** View extension version (`v1.6`) and click **Check** to inspect GitHub for updates.
 - **Synchronization Card:** View real-time status (`Up to Date`, `Update Available`, `Checking`, `Update Failed`). When updates are available, click **Update & Sync** to update in-place.
 - **Current Website Card:**
   - View the active tab's hostname and status badge (`Bypassed`, `Foreground`, `Foreground (Whitelisted)`, `Background (Whitelisted)`, or `Background`).
@@ -326,7 +341,7 @@ MaiTab features an integrated update-check and synchronization workflow directly
 
 ### How to Check for Updates
 1. Open the MaiTab extension popup by clicking the extension icon in Chrome's toolbar.
-2. In the header next to the version badge (`v1.5`), click the **"Check"** / **"Check for Updates"** button.
+2. In the header next to the version badge (`v1.6`), click the **"Check"** / **"Check for Updates"** button.
 3. MaiTab will inspect the remote GitHub repository (`main` branch) and local project state.
 4. The synchronization card displays the current status:
    - **Up to Date:** Your local project matches the latest remote commit on GitHub.
@@ -442,7 +457,7 @@ The test suite validates:
 4. **Global Settings Fallback:** Websites not included in either list follow the global settings.
 5. **Precedence Hierarchy:** Complete Bypass List strictly takes precedence when a website matches both lists.
 6. **Persistence Across Restarts:** Settings, whitelist, bypass list, and theme preferences persist across simulated browser restarts.
-7. **Manifest V3 Structure:** Schema compliance, version 1.5 consistency, permissions, icon files, and localization.
+7. **Manifest V3 Structure:** Schema compliance, version 1.6 consistency, permissions, icon files, and localization.
 8. **UI Layout & Responsiveness:** Verified via real headless Chrome DevTools Protocol (CDP) across multiple viewports and display scale factors (100%, 125%, 150%, 200%).
 9. **GitHub Repository Synchronization:** Verified safe stashing, fetch, rebase, and restoration workflow.
 10. **Direct Repository Iteration Suite:** Validates remote fetching, in-place fast-forward and rebase synchronization, local uncommitted modifications protection, conflict detection and actionable diagnostics, dry-run checks, and project-wide version consistency.
@@ -453,7 +468,7 @@ The test suite validates:
 
 ```text
 MaiTab/
-├── manifest.json                     # Chrome Manifest V3 configuration (v1.5)
+├── manifest.json                     # Chrome Manifest V3 configuration (v1.6)
 ├── _locales/                         # Standard Chrome extension locale messages
 │   ├── en/messages.json              # English extension metadata
 │   ├── zh_CN/messages.json           # Chinese (Simplified) metadata
@@ -463,22 +478,22 @@ MaiTab/
 ├── content/
 │   └── content.js                    # Content script for link click interception & listener lifecycle
 ├── common/
-│   ├── version-info.js               # Central version and commit info (v1.5)
+│   ├── version-info.js               # Central version and commit info (v1.6)
 │   ├── updater.js                    # Manual update checker & synchronization client
-│   ├── i18n.js                       # Centralized multilingual localization engine (v1.5)
+│   ├── i18n.js                       # Centralized multilingual localization engine (v1.6)
 │   ├── domain-matcher.js             # Domain normalization, whitelist & bypass matching logic
 │   ├── link-evaluator.js             # Click qualification, anchor safety, and bypass checks
 │   └── storage.js                    # Storage persistence for settings, whitelist, bypass & theme
 ├── popup/
-│   ├── popup.html                    # Extension popup layout with Light & Dark macOS Aqua themes (v1.5)
+│   ├── popup.html                    # Extension popup layout with Light & Dark macOS Aqua themes (v1.6)
 │   ├── popup.css                     # macOS Aqua System Settings styling with theme tokens
 │   └── popup.js                      # Popup controller with theme, whitelist, bypass & update check
 ├── options/
-│   ├── options.html                  # Options page with responsive macOS Light & Dark layout (v1.5)
+│   ├── options.html                  # Options page with responsive macOS Light & Dark layout (v1.6)
 │   ├── options.css                   # Options page styles matching macOS design tokens
-│   └── options.js                    # Options page controller with theme, import/export & simulation (v1.5)
+│   └── options.js                    # Options page controller with theme, import/export & simulation (v1.6)
 ├── scripts/
-│   ├── sync-repo.js                  # Direct iteration and GitHub synchronization utility (v1.5)
+│   ├── sync-repo.js                  # Direct iteration and GitHub synchronization utility (v1.6)
 │   └── sync-server.js                # Local HTTP synchronization bridge server
 ├── icons/
 │   ├── icon16.png                    # Extension icon (16x16)
@@ -491,18 +506,18 @@ MaiTab/
 │   ├── domain-matcher.test.js        # Domain normalization, whitelist, bypass & precedence tests
 │   ├── link-interceptor.test.js      # Click interception, safety edge cases & bypass tests
 │   ├── storage.test.js               # Storage persistence, CRUD, theme & bypass list tests
-│   ├── manifest-and-integration.test.js # Manifest V3, 6-scenario verification & E2E simulation (v1.5)
-│   ├── ui-layout-and-responsiveness.test.js # Real headless Chrome CDP layout & viewport tests (v1.5)
+│   ├── manifest-and-integration.test.js # Manifest V3, 6-scenario verification & E2E simulation (v1.6)
+│   ├── ui-layout-and-responsiveness.test.js # Real headless Chrome CDP layout & viewport tests (v1.6)
 │   ├── theme-and-sync.test.js        # Light/Dark mode toggle, persistence & sync workflow tests
 │   ├── direct-iteration.test.js      # Direct repository iteration, conflict detection & version tests
 │   ├── popup-whitelist-focus.test.js # Whitelist management & focus mode suite
 │   └── update-and-theme-system.test.js # Update checking, sync & real-time system theme suite
 ├── MaiTab.png                        # Master brand icon asset (512x512)
-├── package.json                      # Project metadata (v1.5.0) and test/sync scripts
-├── POPUP_UI_SPEC.md                  # Primary UI design specification reference (v1.5)
-├── README.md                         # English technical documentation (v1.5)
-├── README_zh-CN.md                   # Simplified Chinese technical documentation (v1.5)
-└── README_ja.md                      # Japanese technical documentation (v1.5)
+├── package.json                      # Project metadata (v1.6.0) and test/sync scripts
+├── POPUP_UI_SPEC.md                  # Primary UI design specification reference (v1.6)
+├── README.md                         # English technical documentation (v1.6)
+├── README_zh-CN.md                   # Simplified Chinese technical documentation (v1.6)
+└── README_ja.md                      # Japanese technical documentation (v1.6)
 ```
 
 ---

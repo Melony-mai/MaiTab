@@ -4,7 +4,12 @@
  */
 
 try {
-  importScripts('../common/domain-matcher.js', '../common/storage.js');
+  importScripts(
+    '../common/domain-matcher.js',
+    '../common/storage.js',
+    '../common/version-info.js',
+    '../common/updater.js'
+  );
 } catch (err) {
   console.error('[MaiTab] Failed to import scripts in service worker:', err);
 }
@@ -68,6 +73,37 @@ async function handleMessage(request, sender) {
     case 'getSettings': {
       const settings = await StorageManager.getSettings();
       return { success: true, settings };
+    }
+
+    case 'checkForUpdates': {
+      if (typeof Updater !== 'undefined' && typeof Updater.checkForUpdates === 'function') {
+        const updateResult = await Updater.checkForUpdates(request.options || {});
+        return { success: true, ...updateResult };
+      }
+      return { success: false, error: 'Updater module unavailable in service worker' };
+    }
+
+    case 'performSync': {
+      if (typeof Updater !== 'undefined' && typeof Updater.performSync === 'function') {
+        const syncResult = await Updater.performSync(request.options || {});
+        return { success: true, ...syncResult };
+      }
+      return { success: false, error: 'Updater module unavailable in service worker' };
+    }
+
+    case 'getSyncState': {
+      const syncState = await StorageManager.getSyncState();
+      return { success: true, syncState };
+    }
+
+    case 'getVersionInfo': {
+      return {
+        success: true,
+        version: typeof VersionInfo !== 'undefined' ? VersionInfo.version : '1.6',
+        fullVersion: typeof VersionInfo !== 'undefined' ? VersionInfo.fullVersion : '1.6.0',
+        commit: typeof VersionInfo !== 'undefined' ? VersionInfo.commit : '',
+        fullCommit: typeof VersionInfo !== 'undefined' ? VersionInfo.fullCommit : ''
+      };
     }
 
     case 'checkSiteStatus': {

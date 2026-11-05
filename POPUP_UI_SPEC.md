@@ -197,7 +197,7 @@ Each page container inherits the exact same vertical flex layout:
   <div class="brand">
     <img src="icon/32.png" alt="App" class="brand-icon" width="22" height="22">
     <h1>AppName</h1>
-    <span class="badge">v1.5</span>
+    <span class="badge">v1.6</span>
   </div>
 </header>
 ```

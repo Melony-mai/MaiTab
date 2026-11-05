@@ -212,7 +212,7 @@ test('Manual Update Checking, Synchronization, and System Theme Suite', async (t
     }`);
 
     assert.ok(uiCheck.hasVersionBadge, 'Version badge must exist');
-    assert.strictEqual(uiCheck.versionText, 'v1.5', 'Version must be v1.5');
+    assert.strictEqual(uiCheck.versionText, 'v1.6', 'Version must be v1.6');
     assert.ok(uiCheck.hasCheckBtn, 'Check for Updates button must exist');
     assert.ok(uiCheck.isNextToBadge, 'Check for Updates button must be grouped next to version badge');
     assert.ok(uiCheck.initialBannerHidden, 'Sync status banner is cleanly hidden until checked');

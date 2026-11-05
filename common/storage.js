@@ -26,6 +26,7 @@
   const DEFAULT_SYNC_STATE = {
     lastSyncCommit: '',       // Short commit SHA of last successfully synchronized commit
     lastSyncFullCommit: '',   // Full commit SHA of last successfully synchronized commit
+    lastSyncVersion: '',      // Version string of last successfully synchronized state
     lastSyncTime: null,       // ISO timestamp of last successful synchronization
     lastCheckTime: null,      // ISO timestamp of last update check
     syncedCommits: [],        // List of synchronized commit SHAs (to prevent repeated update alerts)
@@ -493,6 +494,7 @@
     return {
       lastSyncCommit: lastCommit,
       lastSyncFullCommit: typeof s.lastSyncFullCommit === 'string' ? s.lastSyncFullCommit.trim().toLowerCase() : '',
+      lastSyncVersion: typeof s.lastSyncVersion === 'string' ? s.lastSyncVersion.trim() : '',
       lastSyncTime: typeof s.lastSyncTime === 'string' ? s.lastSyncTime : null,
       lastCheckTime: typeof s.lastCheckTime === 'string' ? s.lastCheckTime : null,
       syncedCommits: commits,
@@ -585,6 +587,7 @@
     const updated = await saveSyncState({
       lastSyncCommit: shortSha || current.lastSyncCommit,
       lastSyncFullCommit: fullSha || current.lastSyncFullCommit,
+      lastSyncVersion: details.version ? String(details.version).trim() : current.lastSyncVersion,
       lastSyncTime: new Date().toISOString(),
       syncedCommits: newSyncedList,
       updateStatus: 'UP_TO_DATE'

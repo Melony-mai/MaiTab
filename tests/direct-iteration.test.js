@@ -224,14 +224,14 @@ test('Direct Repository Iteration and GitHub Synchronization Suite', async (t) =
     }
   });
 
-  await t.test('5. Verify all version references across codebase match v1.5', () => {
+  await t.test('5. Verify all version references across codebase match v1.6', () => {
     // 1. manifest.json
     const manifest = JSON.parse(fs.readFileSync(path.join(rootDir, 'manifest.json'), 'utf8'));
-    assert.strictEqual(manifest.version, '1.5', 'manifest.json version must be 1.5');
+    assert.strictEqual(manifest.version, '1.6', 'manifest.json version must be 1.6');
 
     // 2. package.json
     const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8'));
-    assert.strictEqual(pkg.version, '1.5.0', 'package.json version must be 1.5.0');
+    assert.strictEqual(pkg.version, '1.6.0', 'package.json version must be 1.6.0');
     assert.ok(pkg.scripts.sync, 'package.json must contain sync script');
     assert.ok(pkg.scripts['sync:check'], 'package.json must contain sync:check script');
     assert.ok(pkg.scripts.iterate, 'package.json must contain iterate script');
@@ -240,25 +240,25 @@ test('Direct Repository Iteration and GitHub Synchronization Suite', async (t) =
     const I18n = require('../common/i18n.js');
     ['en', 'zh-CN', 'ja'].forEach(lang => {
       I18n.setLanguage(lang);
-      assert.strictEqual(I18n.t('brandVersion'), 'v1.5', `i18n brandVersion for ${lang} must be v1.5`);
+      assert.strictEqual(I18n.t('brandVersion'), 'v1.6', `i18n brandVersion for ${lang} must be v1.6`);
     });
 
     // 4. popup/popup.html
     const popupHtml = fs.readFileSync(path.join(rootDir, 'popup/popup.html'), 'utf8');
-    assert.ok(popupHtml.includes('data-i18n="brandVersion">v1.5</span>'), 'popup.html must display v1.5 badge');
+    assert.ok(popupHtml.includes('data-i18n="brandVersion">v1.6</span>'), 'popup.html must display v1.6 badge');
 
     // 5. options/options.html
     const optionsHtml = fs.readFileSync(path.join(rootDir, 'options/options.html'), 'utf8');
-    assert.ok(optionsHtml.includes('data-i18n="brandVersion">v1.5</span>'), 'options.html must display v1.5 badge');
+    assert.ok(optionsHtml.includes('data-i18n="brandVersion">v1.6</span>'), 'options.html must display v1.6 badge');
 
     // 6. common/version-info.js
     const versionInfo = require('../common/version-info.js');
-    assert.strictEqual(versionInfo.version, '1.5', 'version-info.js must report version 1.5');
-    assert.strictEqual(versionInfo.fullVersion, '1.5.0', 'version-info.js must report fullVersion 1.5.0');
+    assert.strictEqual(versionInfo.version, '1.6', 'version-info.js must report version 1.6');
+    assert.strictEqual(versionInfo.fullVersion, '1.6.0', 'version-info.js must report fullVersion 1.6.0');
 
     // 7. POPUP_UI_SPEC.md
     const specMd = fs.readFileSync(path.join(rootDir, 'POPUP_UI_SPEC.md'), 'utf8');
-    assert.ok(specMd.includes('<span class="badge">v1.5</span>'), 'POPUP_UI_SPEC.md must reflect v1.5');
+    assert.ok(specMd.includes('<span class="badge">v1.6</span>'), 'POPUP_UI_SPEC.md must reflect v1.6');
   });
 
 });

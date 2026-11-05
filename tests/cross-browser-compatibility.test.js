@@ -256,7 +256,7 @@ test('Cross-Browser Compatibility Suite (Chrome & Edge)', async (t) => {
         // Verify root layout properties
         assert.strictEqual(metrics.bodyClientWidth, 368, 'Body width must be exactly 368px');
         assert.strictEqual(metrics.brandTitle, 'MaiTab');
-        assert.strictEqual(metrics.badgeText, 'v1.5');
+        assert.strictEqual(metrics.badgeText, 'v1.6');
         assert.strictEqual(metrics.cardRadius, '10px');
         assert.strictEqual(metrics.sliderWidth, 38);
         assert.strictEqual(metrics.sliderHeight, 22);

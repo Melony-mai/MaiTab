@@ -15,9 +15,9 @@
     module.exports = factory(VersionInfo, StorageManager);
   } else {
     root.Updater = factory(root.VersionInfo || {
-      version: '1.5',
-      fullVersion: '1.5.0',
-      commit: 'd0b3c49',
+      version: '1.6',
+      fullVersion: '1.6.0',
+      commit: '82058e9',
       branch: 'main',
       repository: 'Melony-mai/MaiTab',
       apiUrl: 'https://api.github.com/repos/Melony-mai/MaiTab'
@@ -26,9 +26,11 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (VersionInfo, StorageManager) {
   'use strict';
 
-  const DEFAULT_LOCAL_ENDPOINT = (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http'))
-    ? window.location.origin
-    : 'http://127.0.0.1:8765';
+  // For fully self-contained browser extension operation on any machine,
+  // DEFAULT_LOCAL_ENDPOINT is null so the extension connects directly to GitHub
+  // without attempting to reach 127.0.0.1:8765 or requiring any local sync bridge.
+  // Tests or dev tooling can still supply or set Updater.localEndpoint explicitly.
+  const DEFAULT_LOCAL_ENDPOINT = null;
 
   const Updater = {
     localEndpoint: DEFAULT_LOCAL_ENDPOINT,
@@ -210,7 +212,8 @@
 
     // 2. Query GitHub public REST API directly
     try {
-      const commitsEndpoint = `${apiUrl}/commits?sha=main&per_page=10`;
+      const targetBranch = options.branch || VersionInfo.branch || 'main';
+      const commitsEndpoint = `${apiUrl}/commits?sha=${encodeURIComponent(targetBranch)}&per_page=10`;
       const res = await fetchWithTimeout(commitsEndpoint, {
         method: 'GET',
         headers: {
@@ -240,6 +243,23 @@
         };
       }
 
+      // Optionally inspect repository manifest for remote version without blocking
+      let remoteVersion = null;
+      try {
+        const manifestRes = await fetchWithTimeout(`${apiUrl}/contents/manifest.json?ref=${encodeURIComponent(targetBranch)}`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/vnd.github.v3.raw+json'
+          }
+        }, 2500);
+        if (manifestRes.ok) {
+          const manifestData = await manifestRes.json();
+          if (manifestData && manifestData.version) {
+            remoteVersion = manifestData.version;
+          }
+        }
+      } catch (_) {}
+
       const latestRemoteSha = (commits[0].sha || '').toLowerCase();
       const latestShortSha = latestRemoteSha.substring(0, 7);
 
@@ -254,6 +274,7 @@
           upToDate: true,
           behindCount: 0,
           incomingCommits: [],
+          remoteVersion,
           latestCommit: {
             sha: latestShortSha,
             message: commits[0].commit?.message?.split('\n')[0] || '',
@@ -281,6 +302,7 @@
           upToDate: true,
           behindCount: 0,
           incomingCommits: [],
+          remoteVersion,
           latestCommit: {
             sha: latestShortSha,
             message: commits[0].commit?.message?.split('\n')[0] || '',
@@ -298,6 +320,7 @@
         upToDate: false,
         behindCount,
         incomingCommits: incomingList,
+        remoteVersion,
         latestCommit: {
           sha: latestShortSha,
           message: commits[0].commit?.message?.split('\n')[0] || '',
@@ -388,6 +411,25 @@
         }
       }
 
+      // Optionally inspect repository manifest for remote version without blocking
+      let remoteVersion = options.remoteVersion || null;
+      if (!remoteVersion) {
+        try {
+          const manifestRes = await fetchWithTimeout(`${apiUrl}/contents/manifest.json?ref=${encodeURIComponent(fullSha || targetBranch)}`, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/vnd.github.v3.raw+json'
+            }
+          }, 2500);
+          if (manifestRes.ok) {
+            const manifestData = await manifestRes.json();
+            if (manifestData && manifestData.version) {
+              remoteVersion = manifestData.version;
+            }
+          }
+        } catch (_) {}
+      }
+
       const shortSha = targetSha.substring(0, 7).toLowerCase();
       const commitSummary = `${shortSha} ${latestMessage}`.trim();
 
@@ -400,6 +442,10 @@
         if (fullSha) VersionInfo.fullCommit = fullSha;
       }
 
+      if (remoteVersion && typeof VersionInfo !== 'undefined' && VersionInfo && typeof VersionInfo.setVersion === 'function') {
+        VersionInfo.setVersion(remoteVersion);
+      }
+
       // Persist synchronization state to browser storage (chrome.storage.local/sync)
       const sm = getStorageManager();
       if (sm && typeof sm.recordSuccessfulSync === 'function') {
@@ -407,6 +453,7 @@
           await sm.recordSuccessfulSync({
             commit: shortSha,
             fullCommit: fullSha || shortSha,
+            version: remoteVersion,
             latestCommit: commitSummary,
             incomingCommits: incomingCommits
           });
@@ -423,6 +470,7 @@
         latestCommit: commitSummary,
         commit: shortSha,
         fullCommit: fullSha || shortSha,
+        remoteVersion,
         date: latestDate,
         message: 'Successfully retrieved and synchronized latest GitHub updates directly through browser.'
       };
@@ -464,7 +512,7 @@
         const res = await fetchWithTimeout(syncUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
-        }, 15000);
+        }, 4000);
 
         const data = await res.json();
         if (res.ok && data.success) {

@@ -1,5 +1,5 @@
 /**
- * MaiTab - Build and Version Information (v1.5)
+ * MaiTab - Build and Version Information (v1.6)
  */
 
 (function (root, factory) {
@@ -11,8 +11,8 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
-  let commit = 'c24fcf0';
-  let fullCommit = '294b74c3e86c1228229b46ef6791e32ba06d644e';
+  let commit = '82058e9';
+  let fullCommit = '82058e992655393b0a681a50a7c32d72a6d71ef7';
 
   // In Node.js / dev environment, dynamically detect git commit if available
   if (typeof process !== 'undefined' && process.versions && process.versions.node) {
@@ -27,8 +27,8 @@
   }
 
   const VersionInfo = {
-    version: '1.5',
-    fullVersion: '1.5.0',
+    version: '1.6',
+    fullVersion: '1.6.0',
     commit,
     fullCommit,
     branch: 'main',
@@ -42,6 +42,12 @@
       const sha = match ? match[1] : clean;
       this.commit = sha.substring(0, 7).toLowerCase();
       this.fullCommit = newFull ? String(newFull).trim().toLowerCase() : (sha.length === 40 ? sha.toLowerCase() : this.commit);
+    },
+    setVersion(newVersion, newFull) {
+      if (!newVersion) return;
+      const clean = String(newVersion).replace(/^v/i, '').trim();
+      this.version = clean;
+      this.fullVersion = newFull ? String(newFull).replace(/^v/i, '').trim() : (clean.includes('.') && clean.split('.').length === 2 ? `${clean}.0` : clean);
     }
   };
 

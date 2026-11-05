@@ -568,7 +568,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Export Whitelist
   exportWhitelistBtn.addEventListener('click', () => {
     const list = currentSettings.whitelist || [];
-    const currentVersion = typeof VersionInfo !== 'undefined' ? VersionInfo.version : '1.5';
+    const currentVersion = typeof VersionInfo !== 'undefined' ? VersionInfo.version : '1.6';
     const exportData = {
       app: 'MaiTab',
       version: currentVersion,
@@ -588,7 +588,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Export Bypass List
   exportBypassBtn.addEventListener('click', () => {
     const list = currentSettings.bypassList || [];
-    const currentVersion = typeof VersionInfo !== 'undefined' ? VersionInfo.version : '1.5';
+    const currentVersion = typeof VersionInfo !== 'undefined' ? VersionInfo.version : '1.6';
     const exportData = {
       app: 'MaiTab',
       version: currentVersion,

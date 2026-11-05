@@ -1,4 +1,4 @@
-# MaiTab - Google Chrome 智能标签页管理扩展 (v1.5)
+# MaiTab - Google Chrome 智能标签页管理扩展 (v1.6)
 
 <p align="center">
   <a href="README.md">English</a> | <strong>简体中文</strong> | <a href="README_ja.md">日本語</a>
@@ -12,6 +12,7 @@
 
 ## 目录
 
+- [v1.6 版本更新内容](#v16-版本更新内容)
 - [v1.5 版本更新内容](#v15-版本更新内容)
 - [v1.31 版本更新内容](#v131-版本更新内容)
 - [v1.3 版本更新内容](#v13-版本更新内容)
@@ -31,6 +32,20 @@
 - [项目目录结构](#项目目录结构)
 - [技术规范与权限声明](#技术规范与权限声明)
 - [开源许可证](#开源许可证)
+
+---
+
+## v1.6 版本更新内容
+
+- **完全自包含的 GitHub 远程仓库同步：**
+  - **零本地桥接与服务依赖：** 扩展在任何机器上安装后均具备完全独立的更新与同步能力。直接通过浏览器调用 GitHub 官方 REST API（`https://api.github.com/repos/Melony-mai/MaiTab`）检测更新并拉取提交，无需本地运行 `sync-server.js` 桥接服务、无需安装 Node.js、无需运行终端命令，也无需任何额外手动设置。
+  - **Manifest V3 官方 GitHub 主机权限：** 在 `manifest.json` 中配置了明确的 `host_permissions`（`https://api.github.com/*`, `https://raw.githubusercontent.com/*`, `https://github.com/*`），确保 Chrome 与 Edge 在 Service Worker 及弹窗界面中拥有可靠无阻的跨域通信权限。
+  - **弹窗内一键检测与应用更新：** 用户在任何机器上点击“检查更新”，发现新提交后点击“更新与同步”，扩展即直接拉取远程更新并持久化至 `chrome.storage`，同步更新内存与运行时版本及提交信息，界面即刻转为“已是最新”。
+  - **后台 Service Worker 更新调度集成：** 在后台服务工作进程中注入了更新处理监听（`checkForUpdates`、`performSync`、`getSyncState`、`getVersionInfo`），支持整套扩展多上下文统一调度。
+- **全项目统一升级至 v1.6：**
+  - 统一更新 `manifest.json`、`package.json`（`1.6.0`）、`version-info.js`、`updater.js`、`storage.js`、多语言字典（`en`、`zh-CN`、`ja`）、界面版本徽标、数据导出元数据以及自动化验证套件中的版本号至 **v1.6**。
+- **多平台跨浏览器测试验证：**
+  - 自动化测试套件完整覆盖真实无头 Chrome 与 Edge CDP 环境下的弹窗渲染、直接 GitHub 更新检测、待拉取提交解析、无本地服务环境下的浏览器直接同步以及会话持久化验证。
 
 ---
 
@@ -243,7 +258,7 @@ MaiTab 遵循严格、清晰且可预测的四级优先级架构来决定每个�
 - **语言切换器（顶部）：** 可在 English、简体中文 和 日本語 之间动态切换。
 - **扩展主开关（右上角）：** 一键启用或暂停链接拦截功能，无需停用或卸载扩展。
 - **主题快捷切换按钮（太阳 / 月亮）：** 点击即可在明亮模式与暗色模式之间快速切换。
-- **版本号与更新检查：** 查看当前安装版本（`v1.5`），点击“检查”按钮连接 GitHub 检测更新。
+- **版本号与更新检查：** 查看当前安装版本（`v1.6`），点击“检查”按钮连接 GitHub 检测更新。
 - **同步状态卡片：** 查看实时同步状态（“已是最新”、“有可用更新”、“检查中”、“更新失败”）；有更新时点击“立即更新”即可原地同步。
 - **当前网站卡片：**
   - 查看当前活动标签页的域名与状态徽标（`已跳过`、`前台切换`、`前台切换 (白名单)`、`后台打开 (白名单)` 或 `后台打开`）。
@@ -324,7 +339,7 @@ MaiTab 内置了与 GitHub 远程仓库深度集成的更新检查与同步链�
 
 ### 如何检查更新
 1. 点击 Chrome 工具栏上的 MaiTab 图标打开扩展弹窗。
-2. 在顶栏版本号（`v1.5`）旁，点击**“检查”**按钮。
+2. 在顶栏版本号（`v1.6`）旁，点击**“检查”**按钮。
 3. MaiTab 将自动联络远程 GitHub 仓库（`main` 分支）与本地状态进行比对。
 4. 同步状态卡片将即时展示结果：
    - **已是最新（Up to Date）：** 本地代码与 GitHub 远程最新提交完全一致。
@@ -440,7 +455,7 @@ npm test
 4. **全局设置后备机制：** 验证未在任何列表中的普通网站严格遵循全局设置。
 5. **四级优先级层级：** 验证当网站同时处于跳过列表与白名单时，完整跳过列表具备绝对优先权。
 6. **重启持久化保存：** 验证设置项、白名单、跳过列表及主题偏好在模拟浏览器重启后完整保留。
-7. **Manifest V3 规范合规：** 验证 schema 结构、1.5 版本号统一性、最小权限集合、图标资源及多语言字典完整性。
+7. **Manifest V3 规范合规：** 验证 schema 结构、1.6 版本号统一性、最小权限集合、图标资源及多语言字典完整性。
 8. **UI 布局与自适应适配：** 基于真实无头 Chrome DevTools 协议（CDP）测试在不同视口分辨率及缩放比例（100%、125%、150%、200%）下的无横向溢出。
 9. **GitHub 仓库同步链路：** 验证安全暂存、拉取、变基与改动还原全流程。
 10. **直接迭代测试套件：** 验证远程拉取、原地快进与变基、未提交修改安全防护、冲突诊断、试运行检查及全项目版本号一致性。
@@ -451,7 +466,7 @@ npm test
 
 ```text
 MaiTab/
-├── manifest.json                     # Chrome Manifest V3 核心配置文件 (v1.5)
+├── manifest.json                     # Chrome Manifest V3 核心配置文件 (v1.6)
 ├── _locales/                         # Chrome 扩展标准国际化多语言目录
 │   ├── en/messages.json              # 英语扩展元数据与多语言字典
 │   ├── zh_CN/messages.json           # 简体中文扩展元数据与多语言字典
@@ -461,22 +476,22 @@ MaiTab/
 ├── content/
 │   └── content.js                    # 前台内容脚本（捕获链接点击、管理监听生命周期与跳过检测）
 ├── common/
-│   ├── version-info.js               # 项目版本与 Git 提交信息核心模块 (v1.5)
+│   ├── version-info.js               # 项目版本与 Git 提交信息核心模块 (v1.6)
 │   ├── updater.js                    # 手动检查更新与同步客户端逻辑
-│   ├── i18n.js                       # 集中式动态多语言国际化引擎 (v1.5)
+│   ├── i18n.js                       # 集中式动态多语言国际化引擎 (v1.6)
 │   ├── domain-matcher.js             # 域名规范化、白名单与完整跳过列表匹配算法
 │   ├── link-evaluator.js             # 链接有效性判定、防误触与安全检查核心逻辑
 │   └── storage.js                    # 数据持久化封装（管理设置项、白名单、跳过列表与主题）
 ├── popup/
-│   ├── popup.html                    # 扩展弹窗 HTML 结构，支持明亮与暗色双主题 (v1.5)
+│   ├── popup.html                    # 扩展弹窗 HTML 结构，支持明亮与暗色双主题 (v1.6)
 │   ├── popup.css                     # macOS Aqua 苹果系统设置风格样式表与主题变量
 │   └── popup.js                      # 弹窗控制器（处理主题切换、白名单、跳过列表与更新检查）
 ├── options/
-│   ├── options.html                  # 高级设置页面 HTML，自适应支持明暗主题 (v1.5)
+│   ├── options.html                  # 高级设置页面 HTML，自适应支持明暗主题 (v1.6)
 │   ├── options.css                   # 高级设置页样式表，复用 macOS 设计令牌
-│   └── options.js                    # 高级设置控制器（导入导出、规则管理与交互式匹配测试） (v1.5)
+│   └── options.js                    # 高级设置控制器（导入导出、规则管理与交互式匹配测试） (v1.6)
 ├── scripts/
-│   ├── sync-repo.js                  # 直接迭代与 GitHub 仓库同步核心脚本 (v1.5)
+│   ├── sync-repo.js                  # 直接迭代与 GitHub 仓库同步核心脚本 (v1.6)
 │   └── sync-server.js                # 本地 HTTP 同步桥接服务
 ├── icons/
 │   ├── icon16.png                    # 扩展图标 (16x16)
@@ -489,18 +504,18 @@ MaiTab/
 │   ├── domain-matcher.test.js        # 域名规范化、白名单、跳过列表与优先级测试
 │   ├── link-interceptor.test.js      # 点击拦截、误触防护与边界条件测试
 │   ├── storage.test.js               # 存储读写、增删改查、主题与跳过列表持久化测试
-│   ├── manifest-and-integration.test.js # Manifest V3 合规、核心场景与端到端集成测试 (v1.5)
-│   ├── ui-layout-and-responsiveness.test.js # 真实 Chrome CDP 无头模式布局与视口缩放测试 (v1.5)
+│   ├── manifest-and-integration.test.js # Manifest V3 合规、核心场景与端到端集成测试 (v1.6)
+│   ├── ui-layout-and-responsiveness.test.js # 真实 Chrome CDP 无头模式布局与视口缩放测试 (v1.6)
 │   ├── theme-and-sync.test.js        # 明暗模式切换、持久化与同步工作流测试
 │   ├── direct-iteration.test.js      # 仓库直接迭代、冲突检测与版本号校验测试
 │   ├── popup-whitelist-focus.test.js # 白名单管理与独立焦点模式测试套件
 │   └── update-and-theme-system.test.js # 检查更新、弹窗同步与系统主题自动跟随测试套件
 ├── MaiTab.png                        # 原始高分辨率品牌图标素材 (512x512)
-├── package.json                      # 项目元数据 (v1.5.0) 与 npm test/sync 脚本配置
-├── POPUP_UI_SPEC.md                  # 弹窗 UI 设计规范基准文档 (v1.5)
-├── README.md                         # 英文技术文档 (v1.5)
-├── README_zh-CN.md                   # 简体中文技术文档 (v1.5)
-└── README_ja.md                      # 日文技术文档 (v1.5)
+├── package.json                      # 项目元数据 (v1.6.0) 与 npm test/sync 脚本配置
+├── POPUP_UI_SPEC.md                  # 弹窗 UI 设计规范基准文档 (v1.6)
+├── README.md                         # 英文技术文档 (v1.6)
+├── README_zh-CN.md                   # 简体中文技术文档 (v1.6)
+└── README_ja.md                      # 日文技术文档 (v1.6)
 ```
 
 ---
