@@ -192,7 +192,12 @@ async function launchBrowserSession(binaryPath, port, debugPort) {
     });
   };
 
-  const close = () => {
+  const close = async () => {
+    try {
+      if (ws.readyState === 1 /* OPEN */) {
+        await send('Browser.close').catch(() => {});
+      }
+    } catch {}
     try { ws.close(); } catch {}
     try { proc.kill(); } catch {}
     try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch {}
@@ -206,6 +211,11 @@ test('Cross-Browser Compatibility Suite (Chrome & Edge)', async (t) => {
   const server = await startStaticServer(SERVER_PORT);
 
   t.after(() => {
+    try {
+      if (typeof server.closeAllConnections === 'function') {
+        server.closeAllConnections();
+      }
+    } catch {}
     server.close();
   });
 
@@ -219,8 +229,8 @@ test('Cross-Browser Compatibility Suite (Chrome & Edge)', async (t) => {
       const debugPort = debugPortBase++;
       const session = await launchBrowserSession(browser.path, SERVER_PORT, debugPort);
 
-      bt.after(() => {
-        session.close();
+      bt.after(async () => {
+        await session.close();
       });
 
       await bt.test('Popup UI fixed dimensions and zero horizontal scrollbar', async () => {

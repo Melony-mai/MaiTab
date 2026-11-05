@@ -128,7 +128,12 @@ async function launchChromeSession(port, debugPort) {
     return res.result.value ? JSON.parse(res.result.value) : null;
   };
 
-  const close = () => {
+  const close = async () => {
+    try {
+      if (ws.readyState === 1 /* OPEN */) {
+        await send('Browser.close').catch(() => {});
+      }
+    } catch {}
     try { ws.close(); } catch {}
     try { chrome.kill(); } catch {}
     try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch {}
@@ -196,7 +201,10 @@ test('Self-Contained GitHub Repository Synchronization Suite (v1.6)', async (t) 
 
     const API_PORT = 8321;
     await new Promise(r => apiServer.listen(API_PORT, r));
-    t.after(() => apiServer.close());
+    t.after(() => {
+      try { apiServer.closeAllConnections?.(); } catch {}
+      apiServer.close();
+    });
 
     // Check updates with localEndpoint = null (fully self-contained)
     const checkResult = await Updater.checkForUpdates({
@@ -274,7 +282,10 @@ test('Self-Contained GitHub Repository Synchronization Suite (v1.6)', async (t) 
     });
 
     await new Promise(r => apiServer.listen(API_PORT, r));
-    t.after(() => apiServer.close());
+    t.after(() => {
+      try { apiServer.closeAllConnections?.(); } catch {}
+      apiServer.close();
+    });
 
     // Static server serving extension files (simulates browser loading extension)
     const staticServer = http.createServer((req, res) => {
@@ -302,7 +313,10 @@ test('Self-Contained GitHub Repository Synchronization Suite (v1.6)', async (t) 
     });
 
     await new Promise(r => staticServer.listen(SERVER_PORT, r));
-    t.after(() => staticServer.close());
+    t.after(() => {
+      try { staticServer.closeAllConnections?.(); } catch {}
+      staticServer.close();
+    });
 
     const session = await launchChromeSession(SERVER_PORT, DEBUG_PORT);
 
