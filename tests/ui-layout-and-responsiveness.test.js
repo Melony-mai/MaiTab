@@ -40,10 +40,13 @@ function startStaticServer(port = 8192) {
   });
 }
 
+const { findChromeBinary } = require('./browser-helper.js');
+
 // Helper to launch isolated Chrome with CDP
 async function launchChromeSession(port, debugPort) {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chrome-ui-test-'));
-  const chrome = spawn('/usr/bin/google-chrome-stable', [
+  const chromePath = findChromeBinary();
+  const chrome = spawn(chromePath, [
     '--headless=new',
     `--remote-debugging-port=${debugPort}`,
     '--no-sandbox',
@@ -154,6 +157,7 @@ test('UI Specification and Responsive Compatibility', async (t) => {
   const SERVER_PORT = 8196;
   const DEBUG_PORT = 9228;
   const server = await startStaticServer(SERVER_PORT);
+  t.after(() => { try { server.close(); } catch (_) {} });
   const session = await launchChromeSession(SERVER_PORT, DEBUG_PORT);
 
   t.after(() => {

@@ -781,6 +781,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (lastCheckResult?.incomingCommits) {
         syncOptions.incomingCommits = lastCheckResult.incomingCommits;
       }
+      if (lastCheckResult?.source) {
+        syncOptions.source = lastCheckResult.source;
+      }
 
       const result = typeof Updater !== 'undefined'
         ? await Updater.performSync(syncOptions)

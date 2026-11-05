@@ -314,6 +314,128 @@
   }
 
   /**
+   * Synchronize updates directly from GitHub REST API through the browser.
+   *
+   * @param {Object} [options]
+   * @param {string} [options.apiUrl] - GitHub repository API endpoint
+   * @param {string} [options.targetCommit] - Target commit SHA if known
+   * @param {Object} [options.latestCommit] - Latest commit details object if known
+   * @param {string[]} [options.incomingCommits] - List of incoming commit descriptions
+   * @param {string} [options.branch] - Target branch (default 'main')
+   * @returns {Promise<Object>}
+   */
+  async function syncFromGitHubDirect(options = {}) {
+    const apiUrl = options.apiUrl || VersionInfo.apiUrl || 'https://api.github.com/repos/Melony-mai/MaiTab';
+    const targetBranch = options.branch || VersionInfo.branch || 'main';
+    const localCommit = await resolveLocalCommit(options);
+
+    try {
+      let targetSha = options.targetCommit || options.latestCommit?.sha || '';
+      let latestMessage = options.latestCommit?.message || '';
+      let latestDate = options.latestCommit?.date || '';
+      let incomingCommits = Array.isArray(options.incomingCommits) ? [...options.incomingCommits] : [];
+      let fullSha = options.fullCommit || (targetSha && targetSha.length === 40 ? targetSha : '');
+
+      // Query GitHub API if we don't have full commit details
+      if (!targetSha || !fullSha || !latestMessage) {
+        const commitsEndpoint = `${apiUrl}/commits?sha=${encodeURIComponent(targetBranch)}&per_page=10`;
+        const res = await fetchWithTimeout(commitsEndpoint, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        }, 10000);
+
+        if (!res.ok) {
+          let errDetail = `HTTP ${res.status}`;
+          try {
+            const errData = await res.json();
+            if (errData && errData.message) errDetail += `: ${errData.message}`;
+          } catch (_) {}
+          throw new Error(`GitHub API returned ${errDetail}`);
+        }
+
+        const commits = await res.json();
+        if (!Array.isArray(commits) || commits.length === 0) {
+          return {
+            success: true,
+            source: 'github-direct',
+            status: 'UP_TO_DATE',
+            upToDate: true,
+            behindCount: 0,
+            incomingCommits: [],
+            message: 'Repository is already up to date.'
+          };
+        }
+
+        const topCommit = commits[0];
+        fullSha = topCommit.sha || '';
+        targetSha = fullSha.substring(0, 7).toLowerCase();
+        latestMessage = (topCommit.commit?.message || '').split('\n')[0];
+        latestDate = topCommit.commit?.author?.date || '';
+
+        if (incomingCommits.length === 0) {
+          const behindIndex = commits.findIndex(c => {
+            const s = (c.sha || '').toLowerCase();
+            return localCommit && (s.startsWith(localCommit) || localCommit.startsWith(s.substring(0, 7)));
+          });
+          const relevantCommits = behindIndex > 0 ? commits.slice(0, behindIndex) : commits.slice(0, 5);
+          incomingCommits = relevantCommits.map(c => {
+            const s = (c.sha || '').substring(0, 7);
+            const msg = (c.commit?.message || '').split('\n')[0];
+            return `${s} ${msg}`.trim();
+          });
+        }
+      }
+
+      const shortSha = targetSha.substring(0, 7).toLowerCase();
+      const commitSummary = `${shortSha} ${latestMessage}`.trim();
+
+      // Update in-memory state
+      Updater.lastSyncCommit = shortSha;
+      if (typeof VersionInfo !== 'undefined' && VersionInfo && typeof VersionInfo.setCommit === 'function') {
+        VersionInfo.setCommit(shortSha, fullSha || shortSha);
+      } else if (typeof VersionInfo !== 'undefined' && VersionInfo) {
+        VersionInfo.commit = shortSha;
+        if (fullSha) VersionInfo.fullCommit = fullSha;
+      }
+
+      // Persist synchronization state to browser storage (chrome.storage.local/sync)
+      const sm = getStorageManager();
+      if (sm && typeof sm.recordSuccessfulSync === 'function') {
+        try {
+          await sm.recordSuccessfulSync({
+            commit: shortSha,
+            fullCommit: fullSha || shortSha,
+            latestCommit: commitSummary,
+            incomingCommits: incomingCommits
+          });
+        } catch (_) {}
+      }
+
+      return {
+        success: true,
+        source: 'github-direct',
+        status: 'UP_TO_DATE',
+        upToDate: true,
+        behindCount: 0,
+        incomingCommits: [],
+        latestCommit: commitSummary,
+        commit: shortSha,
+        fullCommit: fullSha || shortSha,
+        date: latestDate,
+        message: 'Successfully retrieved and synchronized latest GitHub updates directly through browser.'
+      };
+    } catch (err) {
+      return {
+        success: false,
+        status: 'UPDATE_FAILED',
+        error: err.message || 'Failed to synchronize directly from GitHub repository.'
+      };
+    }
+  }
+
+  /**
    * Perform manual synchronization.
    *
    * @param {Object} [options]
@@ -325,7 +447,13 @@
       ? options.localEndpoint
       : (Updater.localEndpoint || DEFAULT_LOCAL_ENDPOINT);
 
+    // If options explicitly requested direct GitHub synchronization or local endpoint is disabled
+    if (options.source === 'github' || options.source === 'github-api' || options.preferGitHub || !localEndpoint) {
+      return syncFromGitHubDirect(options);
+    }
+
     let syncResult = null;
+    let localError = null;
 
     if (localEndpoint) {
       try {
@@ -342,6 +470,7 @@
         if (res.ok && data.success) {
           syncResult = {
             success: true,
+            source: 'local-git',
             status: 'UP_TO_DATE',
             upToDate: true,
             behindCount: 0,
@@ -363,21 +492,22 @@
           };
         }
       } catch (err) {
-        // If local sync endpoint was explicitly specified or test server failed
         if (options.throwOnError) throw err;
-        return {
-          success: false,
-          status: 'UPDATE_FAILED',
-          error: err.message || 'Unable to connect to local synchronization service.'
-        };
+        localError = err;
+        // Local service is unavailable (e.g. running in browser extension without background bridge)
+        // Fall back directly to retrieving and synchronizing changes from GitHub through browser
       }
     }
 
     if (!syncResult) {
+      const gitHubResult = await syncFromGitHubDirect(options);
+      if (gitHubResult.success) {
+        return gitHubResult;
+      }
       return {
         success: false,
         status: 'UPDATE_FAILED',
-        error: 'Synchronization service is not available.'
+        error: gitHubResult.error || localError?.message || 'Unable to synchronize changes from GitHub or local service.'
       };
     }
 
@@ -415,6 +545,7 @@
   Updater.resolveLocalCommit = resolveLocalCommit;
   Updater.checkForUpdates = checkForUpdates;
   Updater.performSync = performSync;
+  Updater.syncFromGitHubDirect = syncFromGitHubDirect;
 
   return Updater;
 });

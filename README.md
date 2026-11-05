@@ -298,8 +298,8 @@ Right-click the extension icon and select **Options**, or click **Options ↗** 
 - **Use the Interactive Domain Match Tester:** Open the Options page and paste the destination URL into the **Interactive Domain Match Tester** to view the exact rule match and resulting tab focus behavior in real time.
 
 ### 3. Update check displays "Update Failed" in the popup
-- **GitHub API Connectivity / Rate Limiting:** Checking remote updates queries the public GitHub REST API (`https://api.github.com/repos/Melony-mai/MaiTab`). Ensure your device has an active internet connection. Unauthenticated requests to GitHub are subject to IP rate limits (60 requests/hour).
-- **Local Synchronization Service Status:** For one-click in-popup synchronization, ensure the local synchronization bridge is running (`npm run sync:server` or `systemctl --user status maitab-sync.service`). If the server is offline, you can run `npm run sync` directly from the terminal.
+- **GitHub API Connectivity / Rate Limiting:** Checking and synchronizing remote updates queries the public GitHub REST API (`https://api.github.com/repos/Melony-mai/MaiTab`). Ensure your device has an active internet connection. Unauthenticated requests to GitHub are subject to IP rate limits (60 requests/hour).
+- **Direct Browser Synchronization:** MaiTab supports direct GitHub retrieval and synchronization straight through the browser. If the local development bridge (`npm run sync:server`) is offline, the extension seamlessly synchronizes directly with GitHub through browser APIs and persists updated synchronization records in Chrome storage. Alternatively, you can run `npm run sync` directly from the terminal.
 
 ### 4. Git conflict detected during synchronization
 - **Local Work Protection:** MaiTab automatically stashes uncommitted modifications and untracked files before pulling updates, so no work is ever lost.

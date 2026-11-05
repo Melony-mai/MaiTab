@@ -125,7 +125,7 @@ test('Direct Repository Iteration and GitHub Synchronization Suite', async (t) =
       assert.strictEqual(fs.existsSync(path.join(repos.tmpLocal, 'remote-utils.js')), true);
       assert.ok(fs.readFileSync(path.join(repos.tmpLocal, 'README.md'), 'utf8').includes('Local uncommitted documentation work.'));
       assert.strictEqual(fs.readFileSync(path.join(repos.tmpLocal, 'local-draft.txt'), 'utf8'), 'Important in-progress draft.');
-      assert.strictEqual(fs.readFileSync(path.join(repos.tmpLocal, 'staged-file.js'), 'utf8'), 'const staged = 1;\n');
+      assert.strictEqual(fs.readFileSync(path.join(repos.tmpLocal, 'staged-file.js'), 'utf8').replace(/\r\n/g, '\n'), 'const staged = 1;\n');
     } finally {
       cleanupTestRepos(repos);
     }

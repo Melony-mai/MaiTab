@@ -8,10 +8,31 @@ const { spawn } = require('node:child_process');
 
 const rootDir = path.resolve(__dirname, '..');
 
+function findChromeBinary() {
+  const candidates = [
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, 'Google\\Chrome\\Application\\chrome.exe') : null,
+    'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+    'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/google-chrome',
+    '/usr/sbin/google-chrome-stable',
+    '/usr/bin/microsoft-edge',
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+  ].filter(Boolean);
+
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return c;
+  }
+  return 'google-chrome';
+}
+
 // Helper to launch isolated Chrome session with CDP
 async function launchChromeSession(port, debugPort) {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chrome-oneclick-test-'));
-  const chrome = spawn('/usr/bin/google-chrome-stable', [
+  const chromePath = findChromeBinary();
+  const chrome = spawn(chromePath, [
     '--headless=new',
     `--remote-debugging-port=${debugPort}`,
     '--no-sandbox',
@@ -189,11 +210,11 @@ test('Direct One-Click Synchronization and Popup Layout Optimization Suite', asy
   });
 
   await new Promise(r => server.listen(SERVER_PORT, r));
+  t.after(() => { try { server.close(); } catch (_) {} });
   const session = await launchChromeSession(SERVER_PORT, DEBUG_PORT);
 
   t.after(() => {
     session.close();
-    server.close();
   });
 
   await t.test('1. Manual "npm run sync" workflow and copy button are completely removed', async () => {

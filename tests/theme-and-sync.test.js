@@ -40,10 +40,13 @@ function startStaticServer(port = 8193) {
   });
 }
 
+const { findChromeBinary } = require('./browser-helper.js');
+
 // Helper to launch isolated Chrome session
 async function launchChromeSession(port, debugPort) {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chrome-theme-test-'));
-  const chrome = spawn('/usr/bin/google-chrome-stable', [
+  const chromePath = findChromeBinary();
+  const chrome = spawn(chromePath, [
     '--headless=new',
     `--remote-debugging-port=${debugPort}`,
     '--no-sandbox',
@@ -143,11 +146,11 @@ test('Theme Support and Repository Synchronization Suite', async (t) => {
   const debugPort = 9223;
 
   const server = await startStaticServer(port);
+  t.after(() => { try { server.close(); } catch (_) {} });
   const session = await launchChromeSession(port, debugPort);
 
   t.after(() => {
     session.close();
-    server.close();
   });
 
   await t.test('Popup Light & Dark Theme Toggle and Instant UI Adaptation', async () => {

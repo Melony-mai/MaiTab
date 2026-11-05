@@ -297,7 +297,7 @@ MaiTab 遵循严格、清晰且可预测的四级优先级架构来决定每个�
 
 ### 3. 弹窗内检查更新提示“更新失败”（Update Failed）
 - **GitHub 接口网络连通性与频次限制：** 检查远程更新依赖于访问公开的 GitHub REST API（`https://api.github.com/repos/Melony-mai/MaiTab`）。请确认网络连通正常。未携带 token 的未鉴权请求受到 GitHub 的 IP 限频策略约束（每小时 60 次）。
-- **本地同步服务是否启动：** 弹窗内一键更新需要本地同步桥接服务处于运行状态（执行 `npm run sync:server` 或检查 `systemctl --user status maitab-sync.service`）。若本地服务未运行，可随时在终端中直接运行 `npm run sync` 进行同步。
+- **浏览器端直接同步与本地服务支持：** MaiTab 支持直接在浏览器内检索并同步 GitHub 最新更新。若本地开发桥接服务（`npm run sync:server`）未启动，插件将自动直接通过浏览器与 GitHub REST API 同步并持久化最新记录。此外，也可随时在终端中直接运行 `npm run sync` 进行本地仓库同步。
 
 ### 4. 同步更新时检测到 Git 冲突
 - **本地工作树完好保护：** MaiTab 在拉取更新前会自动通过 Git stash 保护工作区已修改文件与未跟踪文件，绝对不会静默覆盖或丢弃您的本地代码。

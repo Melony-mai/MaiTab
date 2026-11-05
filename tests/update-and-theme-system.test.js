@@ -8,10 +8,13 @@ const { spawn } = require('node:child_process');
 
 const rootDir = path.resolve(__dirname, '..');
 
+const { findChromeBinary } = require('./browser-helper.js');
+
 // Helper to launch isolated Chrome session
 async function launchChromeSession(port, debugPort) {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chrome-update-theme-test-'));
-  const chrome = spawn('/usr/bin/google-chrome-stable', [
+  const chromePath = findChromeBinary();
+  const chrome = spawn(chromePath, [
     '--headless=new',
     `--remote-debugging-port=${debugPort}`,
     '--no-sandbox',
@@ -188,11 +191,11 @@ test('Manual Update Checking, Synchronization, and System Theme Suite', async (t
   });
 
   await new Promise(r => server.listen(SERVER_PORT, r));
+  t.after(() => { try { server.close(); } catch (_) {} });
   const session = await launchChromeSession(SERVER_PORT, DEBUG_PORT);
 
   t.after(() => {
     session.close();
-    server.close();
   });
 
   await t.test('1. Check for Updates button is clearly accessible next to version badge', async () => {

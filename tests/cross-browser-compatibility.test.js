@@ -53,20 +53,34 @@ function startStaticServer(port = 8205) {
 // Find available browsers
 function getBrowserBinaries() {
   const candidates = [
+    // Windows candidates
+    { name: 'Google Chrome', path: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' },
+    { name: 'Google Chrome (x86)', path: 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe' },
+    process.env.LOCALAPPDATA ? { name: 'Google Chrome (user)', path: path.join(process.env.LOCALAPPDATA, 'Google\\Chrome\\Application\\chrome.exe') } : null,
+    { name: 'Microsoft Edge (x86)', path: 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe' },
+    { name: 'Microsoft Edge', path: 'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe' },
+    process.env.LOCALAPPDATA ? { name: 'Microsoft Edge (user)', path: path.join(process.env.LOCALAPPDATA, 'Microsoft\\Edge\\Application\\msedge.exe') } : null,
+    // Linux candidates
     { name: 'Google Chrome', path: '/usr/sbin/google-chrome-stable' },
     { name: 'Google Chrome (bin)', path: '/usr/bin/google-chrome-stable' },
     { name: 'Microsoft Edge', path: path.join(os.homedir(), '.local/bin/microsoft-edge') },
-    { name: 'Microsoft Edge (system)', path: '/usr/bin/microsoft-edge' }
-  ];
+    { name: 'Microsoft Edge (system)', path: '/usr/bin/microsoft-edge' },
+    // macOS candidates
+    { name: 'Google Chrome', path: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' },
+    { name: 'Microsoft Edge', path: '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge' }
+  ].filter(Boolean);
 
   const browsers = [];
   const seenPaths = new Set();
+  const seenFamilies = new Set();
   for (const c of candidates) {
     if (fs.existsSync(c.path)) {
       const real = fs.realpathSync(c.path);
-      if (!seenPaths.has(real)) {
+      const family = c.name.includes('Edge') ? 'Edge' : 'Chrome';
+      if (!seenPaths.has(real) && !seenFamilies.has(family)) {
         seenPaths.add(real);
-        browsers.push(c);
+        seenFamilies.add(family);
+        browsers.push({ name: family === 'Edge' ? 'Microsoft Edge' : 'Google Chrome', path: c.path });
       }
     }
   }

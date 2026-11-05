@@ -40,10 +40,13 @@ function startStaticServer(port = 8197) {
   });
 }
 
+const { findChromeBinary } = require('./browser-helper.js');
+
 // Helper to launch isolated Chrome session
 async function launchChromeSession(port, debugPort) {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chrome-popup-whitelist-test-'));
-  const chrome = spawn('/usr/bin/google-chrome-stable', [
+  const chromePath = findChromeBinary();
+  const chrome = spawn(chromePath, [
     '--headless=new',
     `--remote-debugging-port=${debugPort}`,
     '--no-sandbox',
@@ -152,11 +155,11 @@ test('Whitelist Management and Focus Mode Control Suite', async (t) => {
   const SERVER_PORT = 8198;
   const DEBUG_PORT = 9230;
   const server = await startStaticServer(SERVER_PORT);
+  t.after(() => { try { server.close(); } catch (_) {} });
   const session = await launchChromeSession(SERVER_PORT, DEBUG_PORT);
 
   t.after(() => {
     session.close();
-    server.close();
   });
 
   await t.test('Red-circled elements are cleanly removed from popup.html', () => {
