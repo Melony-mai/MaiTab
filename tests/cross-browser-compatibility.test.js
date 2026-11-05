@@ -262,6 +262,71 @@ test('Cross-Browser Compatibility Suite (Chrome & Edge)', async (t) => {
         assert.strictEqual(metrics.sliderHeight, 22);
       });
 
+      await bt.test('Popup UI controls containment, select descender line-box, and footer visibility', async () => {
+        await session.setViewport(368, 600, 1.0);
+        await session.navigate('/popup/popup.html');
+
+        for (const lang of ['en', 'zh-CN', 'ja']) {
+          await session.evaluate(`(function(l) {
+            const sel = document.getElementById('langSelect');
+            sel.value = l;
+            sel.dispatchEvent(new Event('change'));
+          })('${lang}')`);
+          await new Promise(r => setTimeout(r, 60));
+
+          const layoutCheck = await session.evaluate(`(() => {
+            const bodyRect = document.body.getBoundingClientRect();
+            const slider = document.querySelector('.header .slider');
+            const sliderRect = slider.getBoundingClientRect();
+            const optLink = document.querySelector('.lists-nav-bar .link-btn');
+            const optRect = optLink.getBoundingClientRect();
+            const footer = document.querySelector('.footer');
+            const footerRect = footer.getBoundingClientRect();
+            const langSelect = document.getElementById('langSelect');
+            const themeSelect = document.getElementById('popupThemeSelect');
+            const langStyle = window.getComputedStyle(langSelect);
+
+            return {
+              bodyWidth: bodyRect.width,
+              sliderRight: sliderRect.right,
+              optRight: optRect.right,
+              footerBottom: footerRect.bottom,
+              langHeight: langSelect.offsetHeight,
+              themeHeight: themeSelect.offsetHeight,
+              langLineHeight: langStyle.lineHeight,
+              langBoxSizing: langStyle.boxSizing
+            };
+          })()`);
+
+          // Verify controls are completely inside body boundaries without clipping
+          assert.ok(
+            layoutCheck.sliderRight <= layoutCheck.bodyWidth + 1,
+            `Slider right (${layoutCheck.sliderRight}) must be fully contained within body width (${layoutCheck.bodyWidth}) in ${lang}`
+          );
+          assert.ok(
+            layoutCheck.optRight <= layoutCheck.bodyWidth + 1,
+            `Options link right (${layoutCheck.optRight}) must be fully contained within body width (${layoutCheck.bodyWidth}) in ${lang}`
+          );
+
+          // Verify select dropdowns preserve font descenders
+          assert.ok(
+            layoutCheck.langHeight >= 26,
+            `Language select height (${layoutCheck.langHeight}) must be >= 26px to preserve glyph descenders`
+          );
+          assert.ok(
+            layoutCheck.themeHeight >= 26,
+            `Theme select height (${layoutCheck.themeHeight}) must be >= 26px to preserve glyph descenders`
+          );
+          assert.strictEqual(layoutCheck.langBoxSizing, 'border-box');
+
+          // Verify footer is rendered within the browser popup ceiling (<= 600px)
+          assert.ok(
+            layoutCheck.footerBottom <= 600,
+            `Footer bottom (${layoutCheck.footerBottom}) must not exceed popup viewport ceiling (600px) in ${lang}`
+          );
+        }
+      });
+
       await bt.test('Display scaling compatibility (100%, 125%, 150%, 200%) without overflow or clipping', async () => {
         const scales = [1.0, 1.25, 1.5, 2.0];
         for (const scale of scales) {

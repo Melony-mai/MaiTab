@@ -96,21 +96,21 @@ html {
                "Hiragino Kaku Gothic ProN", "Microsoft YaHei", system-ui, sans-serif;
   font-size: 13px;
   line-height: 1.4;
-  overflow: hidden;
+  overflow-x: hidden;
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  padding: 12px 14px;
-  width: 368px;
-  min-width: 368px;
-  max-width: 368px;
+  padding: 10px 12px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  max-height: 590px;
+  gap: 8px;
+  max-height: 595px;
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-width: thin;
@@ -186,7 +186,7 @@ body,
 .brand {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
   flex-shrink: 0;
 }
@@ -209,7 +209,7 @@ body,
 .version-wrap {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   flex-shrink: 0;
 }
 
@@ -219,8 +219,8 @@ body,
   gap: 3px;
   font-size: 10px;
   font-weight: 500;
-  padding: 1px 6px;
-  height: 19px;
+  padding: 1px 5px;
+  height: 20px;
   border-radius: 9px;
   background: var(--mac-btn-bg);
   color: var(--mac-text-secondary);
@@ -491,13 +491,13 @@ h1 {
 }
 
 .theme-setting-row {
-  padding: 7px 12px;
+  padding: 6px 12px;
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   flex-shrink: 0;
 }
 
@@ -555,10 +555,12 @@ select.lang-select {
   border: 1px solid var(--mac-btn-border);
   border-radius: 6px;
   color: var(--mac-text-primary);
-  padding: 3px 18px 3px 6px;
+  padding: 2px 16px 2px 6px;
   font-size: 11px;
   font-weight: 400;
-  height: 25px;
+  height: 26px;
+  line-height: normal;
+  box-sizing: border-box;
   cursor: pointer;
   outline: none;
   transition: all 0.15s ease;
@@ -642,8 +644,8 @@ select.lang-select option {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 7px 12px;
-  min-height: 36px;
+  padding: 6px 12px;
+  min-height: 34px;
   border-bottom: 1px solid var(--mac-row-border);
   transition: background-color 0.12s ease;
 }
@@ -937,10 +939,10 @@ input:disabled + .slider {
 }
 
 .card-action-bar {
-  padding: 6px 12px;
+  padding: 5px 12px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 8px;
+  gap: 6px;
   border-top: 1px solid var(--mac-row-border);
 }
 
@@ -980,7 +982,7 @@ input:disabled + .slider {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
 }
 
 .tab-buttons,
@@ -998,7 +1000,7 @@ input:disabled + .slider {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 4px 8px;
+  padding: 3px 7px;
   font-size: 11px;
   font-weight: 500;
   color: var(--mac-text-secondary);
@@ -1227,7 +1229,7 @@ input:disabled + .slider {
 }
 
 .empty-state {
-  padding: 12px 10px;
+  padding: 9px 10px;
   text-align: center;
   display: flex;
   flex-direction: column;

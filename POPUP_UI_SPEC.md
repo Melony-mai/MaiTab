@@ -127,21 +127,21 @@ html {
   color: var(--mac-text-primary);
   font-size: 13px;
   line-height: 1.4;
-  overflow: hidden;
+  overflow-x: hidden;
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  padding: 12px 14px;
-  width: 368px;
-  min-width: 368px;
-  max-width: 368px;
+  padding: 10px 12px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  max-height: 590px;
+  gap: 8px;
+  max-height: 595px;
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-width: thin;
@@ -151,10 +151,12 @@ body {
 }
 ```
 
-- **Fixed Width:** `368px` ensures optimal readability, fits cleanly within browser limits, and prevents horizontal wrapping issues across localized labels.
-- **Max Height:** `580px` avoids vertical viewport clipping on smaller desktop resolutions (such as 768p displays with UI scaling).
-- **Body Padding:** `16px` on all sides creates a standard macOS window margin.
-- **Stack Gap:** `14px` flex gap between all top-level sections (`header`, `settings-group`).
+- **Fixed Root Width:** `368px` on `html` ensures optimal readability and fits cleanly within browser popup limits across Edge and Chrome.
+- **Fluid Body Width:** `100%` width with `min-width: 0` on `body` adapts automatically if a vertical scrollbar gutter (~14-16px in Edge on Windows) appears, completely preventing horizontal clipping of right-aligned elements (such as the master toggle switch and options link).
+- **Max Height:** `595px` accommodates all extension settings comfortably within the browser's 600px popup ceiling.
+- **Form Control Line Box:** Select controls specify `height: 26px; line-height: normal; box-sizing: border-box;` ensuring full visibility of Windows font descenders (e.g., in Segoe UI).
+- **Body Padding:** `10px 12px` creates a balanced macOS window margin without triggering unnecessary vertical overflow.
+- **Stack Gap:** `8px` flex gap between all top-level sections (`header`, `settings-group`).
 
 ### View Routing Architecture (SPA Pattern)
 The popup uses a single HTML file with view switching implemented via hidden classes:
