@@ -53,6 +53,20 @@
   }
 
   /**
+   * Helper to build appropriate GitHub request headers across browser and Node.js
+   */
+  function getGitHubHeaders(extra = {}) {
+    const headers = {
+      'Accept': 'application/vnd.github.v3+json',
+      ...extra
+    };
+    if (typeof process !== 'undefined' && process.versions && process.versions.node) {
+      headers['User-Agent'] = 'MaiTab-Update-Client';
+    }
+    return headers;
+  }
+
+  /**
    * Helper to perform fetch with timeout
    */
   async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
@@ -216,9 +230,7 @@
       const commitsEndpoint = `${apiUrl}/commits?sha=${encodeURIComponent(targetBranch)}&per_page=10`;
       const res = await fetchWithTimeout(commitsEndpoint, {
         method: 'GET',
-        headers: {
-          'Accept': 'application/vnd.github.v3+json'
-        }
+        headers: getGitHubHeaders()
       }, 7000);
 
       if (!res.ok) {
@@ -248,9 +260,7 @@
       try {
         const manifestRes = await fetchWithTimeout(`${apiUrl}/contents/manifest.json?ref=${encodeURIComponent(targetBranch)}`, {
           method: 'GET',
-          headers: {
-            'Accept': 'application/vnd.github.v3.raw+json'
-          }
+          headers: getGitHubHeaders({ 'Accept': 'application/vnd.github.v3.raw+json' })
         }, 2500);
         if (manifestRes.ok) {
           const manifestData = await manifestRes.json();
@@ -364,9 +374,7 @@
         const commitsEndpoint = `${apiUrl}/commits?sha=${encodeURIComponent(targetBranch)}&per_page=10`;
         const res = await fetchWithTimeout(commitsEndpoint, {
           method: 'GET',
-          headers: {
-            'Accept': 'application/vnd.github.v3+json'
-          }
+          headers: getGitHubHeaders()
         }, 10000);
 
         if (!res.ok) {
@@ -417,9 +425,7 @@
         try {
           const manifestRes = await fetchWithTimeout(`${apiUrl}/contents/manifest.json?ref=${encodeURIComponent(fullSha || targetBranch)}`, {
             method: 'GET',
-            headers: {
-              'Accept': 'application/vnd.github.v3.raw+json'
-            }
+            headers: getGitHubHeaders({ 'Accept': 'application/vnd.github.v3.raw+json' })
           }, 2500);
           if (manifestRes.ok) {
             const manifestData = await manifestRes.json();
