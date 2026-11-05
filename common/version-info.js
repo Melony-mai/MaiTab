@@ -11,8 +11,8 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
-  let commit = '82058e9';
-  let fullCommit = '82058e992655393b0a681a50a7c32d72a6d71ef7';
+  let commit = 'a0c2a87';
+  let fullCommit = 'a0c2a87c1cb08738a9d91f4b8f72ee20c5417ae4';
 
   // In Node.js / dev environment, dynamically detect git commit if available
   if (typeof process !== 'undefined' && process.versions && process.versions.node) {

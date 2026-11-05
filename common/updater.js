@@ -17,7 +17,7 @@
     root.Updater = factory(root.VersionInfo || {
       version: '1.6',
       fullVersion: '1.6.0',
-      commit: '82058e9',
+      commit: 'a0c2a87',
       branch: 'main',
       repository: 'Melony-mai/MaiTab',
       apiUrl: 'https://api.github.com/repos/Melony-mai/MaiTab'
@@ -231,7 +231,7 @@
       const res = await fetchWithTimeout(commitsEndpoint, {
         method: 'GET',
         headers: getGitHubHeaders()
-      }, 7000);
+      }, 10000);
 
       if (!res.ok) {
         let errDetail = `HTTP ${res.status}`;
